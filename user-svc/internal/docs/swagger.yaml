@@ -1,0 +1,562 @@
+basePath: /
+definitions:
+  handlers.AdminUpdateResourceRequest:
+    properties:
+      ownerUserId:
+        type: string
+    type: object
+  handlers.AdminUpdateResourceResponse:
+    properties:
+      ownerUserId:
+        type: string
+      resourceId:
+        type: string
+      resourceType:
+        type: string
+    type: object
+  handlers.AdminUpdateUserRequest:
+    properties:
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: string
+    type: object
+  handlers.AdminUpdateUserResponse:
+    properties:
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: string
+      userId:
+        type: string
+    type: object
+  handlers.CheckAccessRequest:
+    properties:
+      action:
+        type: string
+      resourceId:
+        type: string
+      resourceType:
+        type: string
+    type: object
+  handlers.CheckAccessResponse:
+    properties:
+      allowed:
+        type: boolean
+      effectivePermission:
+        type: string
+      isOwner:
+        type: boolean
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  handlers.GrantItem:
+    properties:
+      createdAt:
+        type: string
+      granteeUserId:
+        type: string
+      permission:
+        type: string
+    type: object
+  handlers.GrantRequest:
+    properties:
+      granteeUserId:
+        type: string
+      permission:
+        type: string
+      resourceId:
+        type: string
+      resourceType:
+        type: string
+    type: object
+  handlers.GrantResponse:
+    properties:
+      grantId:
+        type: string
+    type: object
+  handlers.ListGrantsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/handlers.GrantItem'
+        type: array
+    type: object
+  handlers.ListResourcesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/handlers.ResourceItem'
+        type: array
+    type: object
+  handlers.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.LogoutRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  handlers.MeResponse:
+    properties:
+      email:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: string
+      userId:
+        type: string
+    type: object
+  handlers.RefreshRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  handlers.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.RegisterResponse:
+    properties:
+      userId:
+        type: string
+    type: object
+  handlers.ResourceItem:
+    properties:
+      effectivePermission:
+        type: string
+      isOwner:
+        type: boolean
+      resourceId:
+        type: string
+    type: object
+  handlers.ResourceRegisterRequest:
+    properties:
+      ownerUserId:
+        type: string
+      resourceId:
+        type: string
+      resourceType:
+        type: string
+    type: object
+  handlers.ResourceRegisterResponse:
+    properties:
+      ownerUserId:
+        type: string
+      resourceId:
+        type: string
+      resourceType:
+        type: string
+    type: object
+  handlers.RevokeRequest:
+    properties:
+      granteeUserId:
+        type: string
+      resourceId:
+        type: string
+      resourceType:
+        type: string
+    type: object
+  handlers.TokenResponse:
+    properties:
+      accessToken:
+        type: string
+      expiresIn:
+        type: integer
+      refreshToken:
+        type: string
+    type: object
+info:
+  contact: { }
+  description: Authentication and ACL service
+  title: User Service Auth & ACL API
+  version: "1.0"
+paths:
+  /auth/v1/admin/users/{userId}:
+    patch:
+      consumes:
+        - application/json
+      parameters:
+        - description: User ID
+          in: path
+          name: userId
+          required: true
+          type: string
+        - description: Update payload
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.AdminUpdateUserRequest'
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AdminUpdateUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: Admin update user (status/roles)
+      tags:
+        - admin
+  /auth/v1/login:
+    post:
+      consumes:
+        - application/json
+      parameters:
+        - description: Login payload
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.LoginRequest'
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Login user
+      tags:
+        - auth
+  /auth/v1/logout:
+    post:
+      consumes:
+        - application/json
+      parameters:
+        - description: Logout payload
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.LogoutRequest'
+      produces:
+        - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: Logout user (revoke refresh)
+      tags:
+        - auth
+  /auth/v1/me:
+    get:
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MeResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: Current user
+      tags:
+        - auth
+  /auth/v1/register:
+    post:
+      consumes:
+        - application/json
+      parameters:
+        - description: Register payload
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.RegisterRequest'
+      produces:
+        - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Register user
+      tags:
+        - auth
+  /auth/v1/token/refresh:
+    post:
+      consumes:
+        - application/json
+      parameters:
+        - description: Refresh payload
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.RefreshRequest'
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Refresh access token
+      tags:
+        - auth
+  /authz/v1/admin/resources/{resourceType}/{resourceId}:
+    patch:
+      consumes:
+        - application/json
+      parameters:
+        - description: Resource type
+          enum:
+            - mock
+            - dsl_script
+          in: path
+          name: resourceType
+          required: true
+          type: string
+        - description: Resource ID
+          in: path
+          name: resourceId
+          required: true
+          type: string
+        - description: Update owner
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.AdminUpdateResourceRequest'
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AdminUpdateResourceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: Admin change resource owner
+      tags:
+        - admin
+  /authz/v1/check:
+    post:
+      consumes:
+        - application/json
+      parameters:
+        - description: Check access
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.CheckAccessRequest'
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.CheckAccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: Check access for resource
+      tags:
+        - authz
+  /authz/v1/grants:
+    delete:
+      consumes:
+        - application/json
+      parameters:
+        - description: Delete grant
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.RevokeRequest'
+      produces:
+        - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: Delete grant (owner/admin)
+      tags:
+        - authz
+    get:
+      parameters:
+        - description: Resource type
+          enum:
+            - mock
+            - dsl_script
+          in: query
+          name: resourceType
+          required: true
+          type: string
+        - description: Resource ID
+          in: query
+          name: resourceId
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ListGrantsResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: List grants for resource (owner/admin)
+      tags:
+        - authz
+    post:
+      consumes:
+        - application/json
+      parameters:
+        - description: Create grant
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.GrantRequest'
+      produces:
+        - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.GrantResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: Create grant (owner/admin)
+      tags:
+        - authz
+  /authz/v1/resources:
+    get:
+      parameters:
+        - description: Resource type
+          enum:
+            - mock
+            - dsl_script
+          in: query
+          name: resourceType
+          required: true
+          type: string
+        - description: Min permission
+          enum:
+            - read
+            - edit
+          in: query
+          name: minPermission
+          type: string
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ListResourcesResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: List resources by permission
+      tags:
+        - authz
+    post:
+      consumes:
+        - application/json
+      parameters:
+        - description: Register resource
+          in: body
+          name: request
+          required: true
+          schema:
+            $ref: '#/definitions/handlers.ResourceRegisterRequest'
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResourceRegisterResponse'
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.ResourceRegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+        - BearerAuth: [ ]
+      summary: Register resource (ADMIN)
+      tags:
+        - authz
+  /healthz:
+    get:
+      responses:
+        "200":
+          description: OK
+      summary: Health check
+      tags:
+        - health
+schemes:
+  - http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

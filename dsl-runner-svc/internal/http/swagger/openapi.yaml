@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: DSL Runner Service API
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+  /dslrunner/v1/jobs/{jobId}:
+    get:
+      summary: Get job status
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Internal-Secret
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatus'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /dslrunner/v1/jobs/{jobId}/result:
+    get:
+      summary: Get job result
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Internal-Secret
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResult'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Job not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+    JobError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+    JobStatus:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [QUEUED, RUNNING, DONE, FAILED]
+        attempt:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        scriptHash:
+          type: string
+        inputHash:
+          type: string
+        error:
+          $ref: '#/components/schemas/JobError'
+      required:
+        - jobId
+        - status
+        - attempt
+        - createdAt
+        - scriptHash
+        - inputHash
+    GeneratedMockSpec:
+      type: object
+      properties:
+        name:
+          type: string
+        requestMatch:
+          type: object
+        responseTemplate:
+          type: object
+        meta:
+          type: object
+        derivedSeed:
+          type: string
+      required:
+        - name
+        - requestMatch
+        - responseTemplate
+        - meta
+        - derivedSeed
+    JobResult:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        scriptHash:
+          type: string
+        inputHash:
+          type: string
+        generated:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneratedMockSpec'
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+        - jobId
+        - scriptHash
+        - inputHash
+        - generated
+        - warnings

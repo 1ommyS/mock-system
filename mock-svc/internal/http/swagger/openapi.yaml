@@ -1,0 +1,532 @@
+openapi: 3.0.3
+info:
+  title: Mock Storage Service API
+  version: "1.0"
+servers:
+  - url: /
+tags:
+  - name: mocks
+  - name: families
+  - name: generations
+security:
+  - UserHeader: [ ]
+components:
+  securitySchemes:
+    UserHeader:
+      type: apiKey
+      in: header
+      name: X-User-Id
+    BearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    UserId:
+      in: header
+      name: X-User-Id
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: User identifier performing the request
+    Roles:
+      in: header
+      name: X-Roles
+      required: false
+      schema:
+        type: string
+      description: Comma-separated roles (e.g. ADMIN)
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    Mock:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        requestMatch:
+          type: object
+          additionalProperties: true
+        responseTemplate:
+          type: object
+          additionalProperties: true
+        enabled:
+          type: boolean
+        familyId:
+          type: string
+          format: uuid
+          nullable: true
+        createdBy:
+          type: string
+          format: uuid
+        generatedBy:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+          nullable: true
+    Generation:
+      type: object
+      properties:
+        generationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ QUEUED, RUNNING, DONE, FAILED ]
+        baseMockId:
+          type: string
+          format: uuid
+        dslScriptId:
+          type: string
+          format: uuid
+        resultMockIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        error:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+paths:
+  /mocks/v1/mocks:
+    post:
+      tags: [ mocks ]
+      summary: Create mock
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ name, requestMatch, responseTemplate ]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                requestMatch:
+                  type: object
+                  additionalProperties: true
+                responseTemplate:
+                  type: object
+                  additionalProperties: true
+                enabled:
+                  type: boolean
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags: [ mocks ]
+      summary: List mocks
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: familyId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: enabled
+          schema:
+            type: boolean
+        - in: query
+          name: method
+          schema:
+            type: string
+        - in: query
+          name: path
+          schema:
+            type: string
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [ updatedAtDesc ]
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: offset
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Mock"
+  /mocks/v1/mocks/{id}:
+    get:
+      tags: [ mocks ]
+      summary: Get mock
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mock"
+    patch:
+      tags: [ mocks ]
+      summary: Update mock
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                  nullable: true
+                requestMatch:
+                  type: object
+                  additionalProperties: true
+                responseTemplate:
+                  type: object
+                  additionalProperties: true
+                enabled:
+                  type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mock"
+    delete:
+      tags: [ mocks ]
+      summary: Delete mock
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: No Content
+  /mocks/v1/families:
+    post:
+      tags: [ families ]
+      summary: Create family
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ primaryMockId ]
+              properties:
+                primaryMockId:
+                  type: string
+                  format: uuid
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  familyId:
+                    type: string
+                    format: uuid
+  /mocks/v1/families/{familyId}:
+    get:
+      tags: [ families ]
+      summary: Get family
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+        - in: path
+          name: familyId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  familyId:
+                    type: string
+                    format: uuid
+                  primaryMockId:
+                    type: string
+                    format: uuid
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        mockId:
+                          type: string
+                          format: uuid
+                        isPrimary:
+                          type: boolean
+                        derivedFromBaseId:
+                          type: string
+                          format: uuid
+                          nullable: true
+                        viaDslScriptId:
+                          type: string
+                          format: uuid
+                          nullable: true
+  /mocks/v1/families/{familyId}/mocks:
+    post:
+      tags: [ families ]
+      summary: Add mock to family
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+        - in: path
+          name: familyId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ mockId ]
+              properties:
+                mockId:
+                  type: string
+                  format: uuid
+      responses:
+        "204":
+          description: No Content
+  /mocks/v1/families/{familyId}/primary:
+    patch:
+      tags: [ families ]
+      summary: Update family primary mock
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+        - in: path
+          name: familyId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ newPrimaryMockId ]
+              properties:
+                newPrimaryMockId:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  familyId:
+                    type: string
+                    format: uuid
+                  primaryMockId:
+                    type: string
+                    format: uuid
+  /mocks/v1/generations:
+    post:
+      tags: [ generations ]
+      summary: Create generation (preview/apply)
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ baseMockId, dslScriptId, mode ]
+              properties:
+                baseMockId:
+                  type: string
+                  format: uuid
+                dslScriptId:
+                  type: string
+                  format: uuid
+                params:
+                  type: object
+                  additionalProperties: true
+                mode:
+                  type: string
+                  enum: [ preview, apply ]
+      responses:
+        "200":
+          description: Preview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  planned:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                          nullable: true
+                        requestMatch:
+                          type: object
+                          additionalProperties: true
+                        responseTemplate:
+                          type: object
+                          additionalProperties: true
+                        enabled:
+                          type: boolean
+                          nullable: true
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  generationId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+  /mocks/v1/generations/{generationId}:
+    get:
+      tags: [ generations ]
+      summary: Get generation
+      security:
+        - UserHeader: [ ]
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/Roles"
+        - in: path
+          name: generationId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Generation"

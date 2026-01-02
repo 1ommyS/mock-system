@@ -1,0 +1,888 @@
+{
+  "schemes": [
+    "http"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Authentication and ACL service",
+    "title": "User Service Auth \u0026 ACL API",
+    "contact": {},
+    "version": "1.0"
+  },
+  "basePath": "/",
+  "paths": {
+    "/auth/v1/admin/users/{userId}": {
+      "patch": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "admin"
+        ],
+        "summary": "Admin update user (status/roles)",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "User ID",
+            "name": "userId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Update payload",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.AdminUpdateUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.AdminUpdateUserResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/v1/login": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login user",
+        "parameters": [
+          {
+            "description": "Login payload",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.LoginRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.TokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/v1/logout": {
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout user (revoke refresh)",
+        "parameters": [
+          {
+            "description": "Logout payload",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.LogoutRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/v1/me": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "summary": "Current user",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.MeResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/v1/register": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register user",
+        "parameters": [
+          {
+            "description": "Register payload",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.RegisterRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/handlers.RegisterResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/v1/token/refresh": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh access token",
+        "parameters": [
+          {
+            "description": "Refresh payload",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.RefreshRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.TokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/authz/v1/admin/resources/{resourceType}/{resourceId}": {
+      "patch": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "admin"
+        ],
+        "summary": "Admin change resource owner",
+        "parameters": [
+          {
+            "enum": [
+              "mock",
+              "dsl_script"
+            ],
+            "type": "string",
+            "description": "Resource type",
+            "name": "resourceType",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Resource ID",
+            "name": "resourceId",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Update owner",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.AdminUpdateResourceRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.AdminUpdateResourceResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/authz/v1/check": {
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "authz"
+        ],
+        "summary": "Check access for resource",
+        "parameters": [
+          {
+            "description": "Check access",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.CheckAccessRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.CheckAccessResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/authz/v1/grants": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "authz"
+        ],
+        "summary": "List grants for resource (owner/admin)",
+        "parameters": [
+          {
+            "enum": [
+              "mock",
+              "dsl_script"
+            ],
+            "type": "string",
+            "description": "Resource type",
+            "name": "resourceType",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Resource ID",
+            "name": "resourceId",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.ListGrantsResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "authz"
+        ],
+        "summary": "Create grant (owner/admin)",
+        "parameters": [
+          {
+            "description": "Create grant",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.GrantRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/handlers.GrantResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "authz"
+        ],
+        "summary": "Delete grant (owner/admin)",
+        "parameters": [
+          {
+            "description": "Delete grant",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.RevokeRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/authz/v1/resources": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "authz"
+        ],
+        "summary": "List resources by permission",
+        "parameters": [
+          {
+            "enum": [
+              "mock",
+              "dsl_script"
+            ],
+            "type": "string",
+            "description": "Resource type",
+            "name": "resourceType",
+            "in": "query",
+            "required": true
+          },
+          {
+            "enum": [
+              "read",
+              "edit"
+            ],
+            "type": "string",
+            "description": "Min permission",
+            "name": "minPermission",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.ListResourcesResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "authz"
+        ],
+        "summary": "Register resource (ADMIN)",
+        "parameters": [
+          {
+            "description": "Register resource",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/handlers.ResourceRegisterRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/handlers.ResourceRegisterResponse"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/handlers.ResourceRegisterResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/handlers.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "handlers.AdminUpdateResourceRequest": {
+      "type": "object",
+      "properties": {
+        "ownerUserId": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.AdminUpdateResourceResponse": {
+      "type": "object",
+      "properties": {
+        "ownerUserId": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.AdminUpdateUserRequest": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.AdminUpdateUserResponse": {
+      "type": "object",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.CheckAccessRequest": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.CheckAccessResponse": {
+      "type": "object",
+      "properties": {
+        "allowed": {
+          "type": "boolean"
+        },
+        "effectivePermission": {
+          "type": "string"
+        },
+        "isOwner": {
+          "type": "boolean"
+        }
+      }
+    },
+    "handlers.ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.GrantItem": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "granteeUserId": {
+          "type": "string"
+        },
+        "permission": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.GrantRequest": {
+      "type": "object",
+      "properties": {
+        "granteeUserId": {
+          "type": "string"
+        },
+        "permission": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.GrantResponse": {
+      "type": "object",
+      "properties": {
+        "grantId": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.ListGrantsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/handlers.GrantItem"
+          }
+        }
+      }
+    },
+    "handlers.ListResourcesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/handlers.ResourceItem"
+          }
+        }
+      }
+    },
+    "handlers.LoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.LogoutRequest": {
+      "type": "object",
+      "properties": {
+        "refreshToken": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.MeResponse": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.RefreshRequest": {
+      "type": "object",
+      "properties": {
+        "refreshToken": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.RegisterRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.RegisterResponse": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.ResourceItem": {
+      "type": "object",
+      "properties": {
+        "effectivePermission": {
+          "type": "string"
+        },
+        "isOwner": {
+          "type": "boolean"
+        },
+        "resourceId": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.ResourceRegisterRequest": {
+      "type": "object",
+      "properties": {
+        "ownerUserId": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.ResourceRegisterResponse": {
+      "type": "object",
+      "properties": {
+        "ownerUserId": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.RevokeRequest": {
+      "type": "object",
+      "properties": {
+        "granteeUserId": {
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "resourceType": {
+          "type": "string"
+        }
+      }
+    },
+    "handlers.TokenResponse": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer"
+        },
+        "refreshToken": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
+}

@@ -1,0 +1,474 @@
+openapi: 3.0.3
+info:
+  title: User Service Auth & ACL API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:8080
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+  /auth/v1/register:
+    post:
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+  /auth/v1/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+  /auth/v1/token/refresh:
+    post:
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+  /auth/v1/logout:
+    post:
+      summary: Logout (revoke refresh)
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '204':
+          description: No Content
+  /auth/v1/me:
+    get:
+      summary: Current user profile
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+  /auth/v1/admin/users/{userId}:
+    patch:
+      summary: Admin update user
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateUserRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUpdateUserResponse'
+  /authz/v1/resources:
+    post:
+      summary: Register resource (ADMIN)
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceRegisterRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceRegisterResponse'
+        '200':
+          description: Already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceRegisterResponse'
+    get:
+      summary: List resources by permission
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: resourceType
+          schema:
+            type: string
+            enum: [ mock, dsl_script ]
+          required: true
+        - in: query
+          name: minPermission
+          schema:
+            type: string
+            enum: [ read, edit ]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResourcesResponse'
+  /authz/v1/check:
+    post:
+      summary: Check access
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAccessRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckAccessResponse'
+  /authz/v1/grants:
+    post:
+      summary: Create grant (owner/admin)
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantResponse'
+    delete:
+      summary: Delete grant (owner/admin)
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeRequest'
+      responses:
+        '204':
+          description: No Content
+    get:
+      summary: List grants for resource (owner/admin)
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: resourceType
+          schema:
+            type: string
+            enum: [ mock, dsl_script ]
+          required: true
+        - in: query
+          name: resourceId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGrantsResponse'
+  /authz/v1/admin/resources/{resourceType}/{resourceId}:
+    patch:
+      summary: Admin change resource owner
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: resourceType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [ mock, dsl_script ]
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateResourceRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUpdateResourceResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [ email, password ]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        name:
+          type: string
+    RegisterResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+    LoginRequest:
+      type: object
+      required: [ email, password ]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          format: password
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          format: int64
+    RefreshRequest:
+      type: object
+      required: [ refreshToken ]
+      properties:
+        refreshToken:
+          type: string
+    LogoutRequest:
+      type: object
+      required: [ refreshToken ]
+      properties:
+        refreshToken:
+          type: string
+    MeResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+    AdminUpdateUserRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ ACTIVE, BLOCKED, DELETED ]
+        roles:
+          type: array
+          items:
+            type: string
+    AdminUpdateUserResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+        status:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    ResourceRegisterRequest:
+      type: object
+      required: [ resourceType, resourceId, ownerUserId ]
+      properties:
+        resourceType:
+          type: string
+          enum: [ mock, dsl_script ]
+        resourceId:
+          type: string
+          format: uuid
+        ownerUserId:
+          type: string
+    ResourceRegisterResponse:
+      type: object
+      properties:
+        resourceType:
+          type: string
+        resourceId:
+          type: string
+        ownerUserId:
+          type: string
+    CheckAccessRequest:
+      type: object
+      required: [ resourceType, resourceId, action ]
+      properties:
+        resourceType:
+          type: string
+          enum: [ mock, dsl_script ]
+        resourceId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [ read, edit ]
+    CheckAccessResponse:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        effectivePermission:
+          type: string
+          enum: [ NONE, READ, EDIT ]
+        isOwner:
+          type: boolean
+    GrantRequest:
+      type: object
+      required: [ resourceType, resourceId, granteeUserId, permission ]
+      properties:
+        resourceType:
+          type: string
+          enum: [ mock, dsl_script ]
+        resourceId:
+          type: string
+          format: uuid
+        granteeUserId:
+          type: string
+        permission:
+          type: string
+          enum: [ READ, EDIT ]
+    GrantResponse:
+      type: object
+      properties:
+        grantId:
+          type: string
+    RevokeRequest:
+      type: object
+      required: [ resourceType, resourceId, granteeUserId ]
+      properties:
+        resourceType:
+          type: string
+          enum: [ mock, dsl_script ]
+        resourceId:
+          type: string
+          format: uuid
+        granteeUserId:
+          type: string
+    ListResourcesResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceItem'
+    ResourceItem:
+      type: object
+      properties:
+        resourceId:
+          type: string
+        effectivePermission:
+          type: string
+          enum: [ NONE, READ, EDIT ]
+        isOwner:
+          type: boolean
+    ListGrantsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrantItem'
+    GrantItem:
+      type: object
+      properties:
+        granteeUserId:
+          type: string
+        permission:
+          type: string
+          enum: [ READ, EDIT ]
+        createdAt:
+          type: string
+          format: date-time
+    AdminUpdateResourceRequest:
+      type: object
+      properties:
+        ownerUserId:
+          type: string
+    AdminUpdateResourceResponse:
+      type: object
+      properties:
+        resourceType:
+          type: string
+        resourceId:
+          type: string
+        ownerUserId:
+          type: string

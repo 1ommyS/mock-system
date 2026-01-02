@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "dsl.results.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "jobId",
+    "jobKey",
+    "status",
+    "scriptHash",
+    "inputHash",
+    "generatedCount",
+    "resultBytes",
+    "finishedAt"
+  ],
+  "properties": {
+    "jobId": { "type": "string", "format": "uuid" },
+    "jobKey": { "type": "string" },
+    "status": { "type": "string", "enum": ["DONE", "FAILED"] },
+    "scriptHash": { "type": "string" },
+    "inputHash": { "type": "string" },
+    "generatedCount": { "type": "integer", "minimum": 0 },
+    "resultBytes": { "type": "integer", "minimum": 0 },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code"],
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    },
+    "finishedAt": { "type": "string", "format": "date-time" }
+  }
+}

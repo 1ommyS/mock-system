@@ -1,0 +1,23 @@
+# macOS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Go build/test outputs
+bin/
+dist/
+coverage.*
+*.out
+*.test
+
+# Go module/vendor cache (repo-local)
+user-svc/.cache/
+user-svc/config.yaml/
+
+# Dependency vendors (if generated)
+vendor/
+
+# Local config/secrets
+config.yaml
+*.local.yaml
+*.env

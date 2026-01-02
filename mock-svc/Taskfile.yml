@@ -1,0 +1,49 @@
+version: '3'
+
+vars:
+  CONFIG: '{{.CONFIG | default "config.yaml"}}'
+  GOCACHE: '{{.GOCACHE | default ".cache"}}'
+  DB_DSN: '{{.DB_DSN | default "postgres://user:pass@localhost:6432/mocksvc?sslmode=disable"}}'
+  GOOSE: '{{.GOOSE | default "goose"}}'
+
+tasks:
+  test:
+    desc: Run all tests (uses local GOCACHE)
+    cmds:
+      - go test ./...
+    env:
+      GOWORK: ""
+  test:nocache:
+    desc: Run all tests without Go cache
+    cmds:
+      - GOCACHE={{.GOCACHE}} go clean -testcache
+      - GOCACHE={{.GOCACHE}} go test -count=1 ./...
+    env:
+      GOWORK: ""
+  swagger:
+    desc: Validate OpenAPI spec
+    cmds:
+      - go run github.com/getkin/kin-openapi/cmd/validate@latest internal/http/swagger/openapi.yaml
+    env:
+      GOWORK: ""
+
+  run:
+    desc: Run the service with config path
+    cmds:
+      - CONFIG_PATH={{.CONFIG}} go run ./cmd/mock-svc
+    env:
+      GOWORK: ""
+
+  migrate:up:
+    desc: Apply database migrations with goose
+    cmds:
+      - '{{.GOOSE}} -dir migrations postgres "{{.DB_DSN}}" up'
+    env:
+      GOWORK: ""
+
+  migrate:down:
+    desc: Roll back one migration with goose
+    cmds:
+      - '{{.GOOSE}} -dir migrations postgres "{{.DB_DSN}}" down'
+    env:
+      GOWORK: ""

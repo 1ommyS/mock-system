@@ -1,0 +1,43 @@
+version: '3'
+
+vars:
+  CONFIG: '{{.CONFIG | default "config.yaml"}}'
+  GOCACHE: '{{.GOCACHE | default ".cache"}}'
+  DB_DSN: '{{.DB_DSN | default "postgres://users:users_password@localhost:5432/users?sslmode=disable"}}'
+  GOOSE: '{{.GOOSE | default "goose"}}'
+
+tasks:
+  swagger:
+    desc: Generate swagger docs via swag
+    cmds:
+      - swag init -g cmd/user-svc/main.go -o internal/docs --outputTypes yaml,json
+    env:
+      GOWORK: ""
+
+  test:
+    desc: Run all tests (uses local GOCACHE)
+    cmds:
+      - go test ./tests/**
+    env:
+      GOWORK: ""
+
+  run:
+    desc: Run the service with config path
+    cmds:
+      - CONFIG_PATH={{.CONFIG}} go run ./cmd/user-svc
+    env:
+      GOWORK: ""
+
+  migrate:up:
+    desc: Apply database migrations with goose
+    cmds:
+      - '{{.GOOSE}} -dir migrations postgres "{{.DB_DSN}}" up'
+    env:
+      GOWORK: ""
+
+  migrate:down:
+    desc: Roll back one migration with goose
+    cmds:
+      - '{{.GOOSE}} -dir migrations postgres "{{.DB_DSN}}" down'
+    env:
+      GOWORK: ""
