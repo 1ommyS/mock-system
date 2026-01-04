@@ -98,12 +98,16 @@ func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
 		return err
 	}
 
+	warnings := execRes.Warnings
+	if warnings == nil {
+		warnings = []string{}
+	}
 	payload := domain.JobResultPayload{
 		JobID:      job.JobID,
 		ScriptHash: execRes.ScriptHash,
 		InputHash:  execRes.InputHash,
 		Generated:  execRes.Generated,
-		Warnings:   execRes.Warnings,
+		Warnings:   warnings,
 	}
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {

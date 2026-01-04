@@ -70,8 +70,8 @@ type AuthClient interface {
 }
 
 type DSLRunner interface {
-	Preview(ctx context.Context, baseMock DSLBaseMock, dslScriptID string, params json.RawMessage) ([]GeneratedMock, error)
-	Apply(ctx context.Context, baseMock DSLBaseMock, dslScriptID string, params json.RawMessage) ([]GeneratedMock, error)
+	Preview(ctx context.Context, baseMock DSLBaseMock, dslScriptID string, dslScript string, params json.RawMessage) ([]GeneratedMock, error)
+	Apply(ctx context.Context, baseMock DSLBaseMock, dslScriptID string, dslScript string, params json.RawMessage) ([]GeneratedMock, error)
 }
 
 type ResourceAccess struct {

@@ -21,7 +21,19 @@ services:
       - "6432:5432"
     volumes:
       - mock-postgres-data:/var/lib/postgresql/data
+  dsl-runner-postgres:
+    image: postgres:16-alpine
+    container_name: dsl-runner-postgres
+    environment:
+      POSTGRES_DB: dslrunner
+      POSTGRES_USER: dsl
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "7432:5432"
+    volumes:
+      - dsl-runner-postgres-data:/var/lib/postgresql/data
 
 volumes:
   users-postgres-data:
   mock-postgres-data:
+  dsl-runner-postgres-data:

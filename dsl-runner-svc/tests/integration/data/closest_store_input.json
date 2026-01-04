@@ -1,0 +1,45 @@
+{
+  "jobId": "22222222-2222-2222-2222-222222222222",
+  "jobKey": "closest-store-1",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "mode": "preview",
+  "seed": "seed-closest",
+  "baseMock": {
+    "requestMatch": {
+      "method": "GET",
+      "path": "/api/v1/points"
+    },
+    "responseTemplate": {
+      "status": 200,
+      "body": {
+        "points": [
+          {
+            "id": "p-001",
+            "name": "North Point",
+            "distanceKm": 1.2,
+            "address": "1 North St",
+            "lat": 59.9386,
+            "lon": 30.3141,
+            "workingHours": "09:00-21:00"
+          },
+          {
+            "id": "p-002",
+            "name": "South Point",
+            "distanceKm": 3.4,
+            "address": "2 South St",
+            "lat": 59.9000,
+            "lon": 30.3000,
+            "workingHours": "10:00-20:00"
+          }
+        ]
+      }
+    }
+  },
+  "params": {},
+  "dslScript": "{\"version\":1,\"steps\":[{\"op\":\"let\",\"name\":\"points\",\"value\":{\"$\":\"input.base.responseTemplate.body.points\"}},{\"op\":\"let\",\"name\":\"closest\",\"value\":{\"$\":\"input.base.responseTemplate.body.points[0]\"}},{\"op\":\"emit\",\"name\":\"get-closest-store\",\"requestMatch\":{\"method\":\"GET\",\"path\":\"/api/v1/get-closest-store\"},\"responseTemplate\":{\"status\":200,\"body\":{\"store\":{\"$\":\"vars.closest\"}}},\"meta\":{\"source\":\"points\",\"count\":{\"$fn\":\"len\",\"args\":[{\"$\":\"vars.points\"}]}}}]}" ,
+  "limits": {
+    "timeoutMs": 5000,
+    "maxGeneratedMocks": 10,
+    "maxResultBytes": 2000000
+  }
+}

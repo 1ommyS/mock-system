@@ -20,11 +20,12 @@ const (
 type GenerationInput struct {
 	BaseMockID  string
 	DSLScriptID string
+	DSLScript   string
 	Params      json.RawMessage
 }
 
 func (s *Service) PreviewGeneration(ctx context.Context, token, userID string, input GenerationInput) ([]GeneratedMock, error) {
-	if input.BaseMockID == "" || input.DSLScriptID == "" {
+	if input.BaseMockID == "" || input.DSLScriptID == "" || input.DSLScript == "" {
 		return nil, ErrInvalidRequest
 	}
 	if err := validateOptionalJSON(input.Params); err != nil {
@@ -37,7 +38,7 @@ func (s *Service) PreviewGeneration(ctx context.Context, token, userID string, i
 	if err != nil {
 		return nil, mapRepoError(err)
 	}
-	planned, err := s.DSL.Preview(ctx, toDSLBaseMock(base), input.DSLScriptID, input.Params)
+	planned, err := s.DSL.Preview(ctx, toDSLBaseMock(base), input.DSLScriptID, input.DSLScript, input.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func (s *Service) StartGeneration(ctx context.Context, token, userID string, inp
 	if userID == "" {
 		return domain.Generation{}, ErrUnauthorized
 	}
-	if input.BaseMockID == "" || input.DSLScriptID == "" {
+	if input.BaseMockID == "" || input.DSLScriptID == "" || input.DSLScript == "" {
 		return domain.Generation{}, ErrInvalidRequest
 	}
 	if err := validateOptionalJSON(input.Params); err != nil {
@@ -80,7 +81,7 @@ func (s *Service) StartGeneration(ctx context.Context, token, userID string, inp
 		return domain.Generation{}, err
 	}
 
-	go s.runGeneration(created.ID, base, input.DSLScriptID, input.Params, userID)
+	go s.runGeneration(created.ID, base, input.DSLScriptID, input.DSLScript, input.Params, userID)
 	return created, nil
 }
 
@@ -128,13 +129,13 @@ func (s *Service) checkGenerationAccess(ctx context.Context, token, baseMockID, 
 	return nil
 }
 
-func (s *Service) runGeneration(generationID string, base domain.Mock, dslScriptID string, params json.RawMessage, initiator string) {
+func (s *Service) runGeneration(generationID string, base domain.Mock, dslScriptID string, dslScript string, params json.RawMessage, initiator string) {
 	ctx := context.Background()
 	_ = s.Tx.WithTx(ctx, func(tx *sqlx.Tx) error {
 		return s.Repos.Generations.UpdateStatus(ctx, tx, generationID, GenerationRunning, nil, nil)
 	})
 
-	derived, err := s.DSL.Apply(ctx, toDSLBaseMock(base), dslScriptID, params)
+	derived, err := s.DSL.Apply(ctx, toDSLBaseMock(base), dslScriptID, dslScript, params)
 	if err != nil {
 		s.failGeneration(ctx, generationID, fmt.Sprintf("dsl apply error: %v", err))
 		return

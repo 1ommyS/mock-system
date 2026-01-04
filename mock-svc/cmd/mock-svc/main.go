@@ -59,7 +59,21 @@ func main() {
 		Outbox:      store.Outbox,
 	}
 	authClient := service.NewAuthClient(cfg.AuthBaseURL)
-	dslClient := service.NewDSLRunnerClient(cfg.DSLRunnerBaseURL)
+	kafkaPublisher := service.NewKafkaPublisher(cfg.KafkaBrokers, cfg.KafkaJobsTopic)
+	defer kafkaPublisher.Writer.Close()
+	dslClient := service.NewDSLRunnerClient(service.DSLRunnerConfig{
+		BaseURL:        cfg.DSLRunnerBaseURL,
+		InternalSecret: cfg.DSLRunnerInternalSecret,
+		PollInterval:   cfg.DSLRunnerPollInterval,
+		PollTimeout:    cfg.DSLRunnerPollTimeout,
+		JobsTopic:      cfg.KafkaJobsTopic,
+		Limits: service.JobLimits{
+			TimeoutMs:         cfg.DSLRunnerTimeoutMs,
+			MaxGeneratedMocks: cfg.DSLRunnerMaxGenerated,
+			MaxResultBytes:    cfg.DSLRunnerMaxResultBytes,
+		},
+		Publisher: kafkaPublisher,
+	})
 	services := application.New(repos, store, authClient, dslClient, cfg.OutboxMaxAttempt)
 	handler := handlers.New(services)
 	router := httpserver.NewRouter(handler)

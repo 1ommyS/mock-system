@@ -455,7 +455,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [ baseMockId, dslScriptId, mode ]
+              required: [ baseMockId, dslScriptId, dslScript, mode ]
               properties:
                 baseMockId:
                   type: string
@@ -463,6 +463,8 @@ paths:
                 dslScriptId:
                   type: string
                   format: uuid
+                dslScript:
+                  type: string
                 params:
                   type: object
                   additionalProperties: true

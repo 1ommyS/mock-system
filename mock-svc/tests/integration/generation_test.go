@@ -56,6 +56,7 @@ func TestGenerationApplyCreatesDerivedMocks(t *testing.T) {
 	genBody := map[string]any{
 		"baseMockId":  created.ID,
 		"dslScriptId": "11111111-1111-1111-1111-111111111111",
+		"dslScript":   `{"version":1,"steps":[{"op":"emit","name":"derived-1","requestMatch":{"method":"GET","path":"/base/derived"},"responseTemplate":{"status":201},"meta":{"from":"test"}}]}`,
 		"mode":        "apply",
 	}
 	status, body = doJSON(t, client, http.MethodPost, srv.Server.URL+"/mocks/v1/generations", genBody, headers)

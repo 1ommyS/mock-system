@@ -1,0 +1,36 @@
+{
+  "jobId": "99999999-9999-9999-9999-999999999999",
+  "jobKey": "d60a3d8f7f230058fcb6018229e577e885648e2b29de2246cad3a317e00e3132",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "mode": "apply",
+  "seed": "903943907c43d783cba0aa76dbfce9706951939fd2d62ea0013f66021d0d8736",
+  "baseMockId": "22222222-2222-2222-2222-222222222222",
+  "dslScriptId": "33333333-3333-3333-3333-333333333333",
+  "dslScript": "{\"version\":1,\"steps\":[{\"op\":\"emit\",\"name\":\"derived-1\",\"requestMatch\":{\"method\":\"GET\",\"path\":\"/base/derived\"},\"responseTemplate\":{\"status\":201},\"meta\":{\"from\":\"test\"}}]}",
+  "baseMock": {
+    "description": "base desc",
+    "enabled": true,
+    "id": "22222222-2222-2222-2222-222222222222",
+    "name": "base-mock",
+    "requestMatch": {
+      "method": "GET",
+      "path": "/base"
+    },
+    "request_match": {
+      "method": "GET",
+      "path": "/base"
+    },
+    "responseTemplate": {
+      "status": 200
+    },
+    "response_template": {
+      "status": 200
+    }
+  },
+  "params": {},
+  "limits": {
+    "timeoutMs": 5000,
+    "maxGeneratedMocks": 200,
+    "maxResultBytes": 2000000
+  }
+}

@@ -13,6 +13,7 @@ import (
 type CreateGenerationRequest struct {
 	BaseMockID  string          `json:"baseMockId"`
 	DSLScriptID string          `json:"dslScriptId"`
+	DSLScript   string          `json:"dslScript"`
 	Params      json.RawMessage `json:"params,omitempty"`
 	Mode        string          `json:"mode"`
 }
@@ -51,6 +52,7 @@ func (h *Handler) CreateGeneration(w http.ResponseWriter, r *http.Request) {
 	input := application.GenerationInput{
 		BaseMockID:  req.BaseMockID,
 		DSLScriptID: req.DSLScriptID,
+		DSLScript:   req.DSLScript,
 		Params:      req.Params,
 	}
 	mode := strings.ToLower(req.Mode)

@@ -11,14 +11,22 @@ import (
 )
 
 type Config struct {
-	HTTPAddr         string        `yaml:"http_addr"`
-	DBDSN            string        `yaml:"db_dsn"`
-	LogLevel         string        `yaml:"log_level"`
-	AuthBaseURL      string        `yaml:"auth_base_url"`
-	DSLRunnerBaseURL string        `yaml:"dsl_runner_base_url"`
-	OutboxInterval   time.Duration `yaml:"outbox_interval"`
-	OutboxBatchSize  int           `yaml:"outbox_batch_size"`
-	OutboxMaxAttempt int           `yaml:"outbox_max_attempts"`
+	HTTPAddr                string        `yaml:"http_addr"`
+	DBDSN                   string        `yaml:"db_dsn"`
+	LogLevel                string        `yaml:"log_level"`
+	AuthBaseURL             string        `yaml:"auth_base_url"`
+	DSLRunnerBaseURL        string        `yaml:"dsl_runner_base_url"`
+	DSLRunnerInternalSecret string        `yaml:"dsl_runner_internal_secret"`
+	DSLRunnerPollInterval   time.Duration `yaml:"dsl_runner_poll_interval"`
+	DSLRunnerPollTimeout    time.Duration `yaml:"dsl_runner_poll_timeout"`
+	DSLRunnerTimeoutMs      int           `yaml:"dsl_runner_timeout_ms"`
+	DSLRunnerMaxGenerated   int           `yaml:"dsl_runner_max_generated_mocks"`
+	DSLRunnerMaxResultBytes int           `yaml:"dsl_runner_max_result_bytes"`
+	KafkaBrokers            []string      `yaml:"kafka_brokers"`
+	KafkaJobsTopic          string        `yaml:"kafka_jobs_topic"`
+	OutboxInterval          time.Duration `yaml:"outbox_interval"`
+	OutboxBatchSize         int           `yaml:"outbox_batch_size"`
+	OutboxMaxAttempt        int           `yaml:"outbox_max_attempts"`
 }
 
 func Load() (Config, error) {
@@ -52,6 +60,24 @@ func Load() (Config, error) {
 	if cfg.OutboxMaxAttempt == 0 {
 		cfg.OutboxMaxAttempt = 10
 	}
+	if cfg.DSLRunnerPollInterval == 0 {
+		cfg.DSLRunnerPollInterval = 200 * time.Millisecond
+	}
+	if cfg.DSLRunnerPollTimeout == 0 {
+		cfg.DSLRunnerPollTimeout = 5 * time.Second
+	}
+	if cfg.DSLRunnerTimeoutMs == 0 {
+		cfg.DSLRunnerTimeoutMs = 5000
+	}
+	if cfg.DSLRunnerMaxGenerated == 0 {
+		cfg.DSLRunnerMaxGenerated = 200
+	}
+	if cfg.DSLRunnerMaxResultBytes == 0 {
+		cfg.DSLRunnerMaxResultBytes = 2_000_000
+	}
+	if cfg.KafkaJobsTopic == "" {
+		cfg.KafkaJobsTopic = "dsl.jobs.v1"
+	}
 
 	if cfg.DBDSN == "" {
 		return Config{}, fmt.Errorf("db_dsn is required")
@@ -61,6 +87,12 @@ func Load() (Config, error) {
 	}
 	if cfg.DSLRunnerBaseURL == "" {
 		return Config{}, fmt.Errorf("dsl_runner_base_url is required")
+	}
+	if cfg.DSLRunnerInternalSecret == "" {
+		return Config{}, fmt.Errorf("dsl_runner_internal_secret is required")
+	}
+	if len(cfg.KafkaBrokers) == 0 {
+		return Config{}, fmt.Errorf("kafka_brokers is required")
 	}
 
 	return cfg, nil

@@ -81,13 +81,13 @@ type fakeDSLRunner struct {
 	derived []application.GeneratedMock
 }
 
-func (f *fakeDSLRunner) Preview(_ context.Context, _ application.DSLBaseMock, _ string, _ json.RawMessage) ([]application.GeneratedMock, error) {
+func (f *fakeDSLRunner) Preview(_ context.Context, _ application.DSLBaseMock, _ string, _ string, _ json.RawMessage) ([]application.GeneratedMock, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return append([]application.GeneratedMock{}, f.planned...), nil
 }
 
-func (f *fakeDSLRunner) Apply(_ context.Context, _ application.DSLBaseMock, _ string, _ json.RawMessage) ([]application.GeneratedMock, error) {
+func (f *fakeDSLRunner) Apply(_ context.Context, _ application.DSLBaseMock, _ string, _ string, _ json.RawMessage) ([]application.GeneratedMock, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return append([]application.GeneratedMock{}, f.derived...), nil

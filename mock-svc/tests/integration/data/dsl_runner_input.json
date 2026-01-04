@@ -1,0 +1,20 @@
+{
+  "jobId": "99999999-9999-9999-9999-999999999999",
+  "createdAt": "2024-01-01T00:00:00Z",
+  "baseMock": {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "name": "base-mock",
+    "description": "base desc",
+    "requestMatch": {
+      "method": "GET",
+      "path": "/base"
+    },
+    "responseTemplate": {
+      "status": 200
+    },
+    "enabled": true
+  },
+  "dslScriptId": "33333333-3333-3333-3333-333333333333",
+  "dslScript": "{\"version\":1,\"steps\":[{\"op\":\"emit\",\"name\":\"derived-1\",\"requestMatch\":{\"method\":\"GET\",\"path\":\"/base/derived\"},\"responseTemplate\":{\"status\":201},\"meta\":{\"from\":\"test\"}}]}",
+  "params": {}
+}

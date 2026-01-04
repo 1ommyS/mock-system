@@ -1,0 +1,46 @@
+{
+  "jobId": "11111111-1111-1111-1111-111111111111",
+  "scriptHash": "698fc8b6de6422df51461ae462ba9a6c49f6bb2a638e4dc96b1480e0ca353148",
+  "inputHash": "c4a00143bd3794b276a930829b2803343b3fd0bf3f0359c22f00340076d6e506",
+  "generated": [
+    {
+      "name": "gen-0",
+      "requestMatch": {
+        "method": "GET",
+        "path": "/base/v0"
+      },
+      "responseTemplate": {
+        "body": {
+          "n": 9,
+          "stableId": "e7e05ecf-47ba-451d-b2ba-142d01b3ceca"
+        },
+        "status": 200
+      },
+      "meta": {
+        "from": "dsl",
+        "i": 0
+      },
+      "derivedSeed": "f082c9ff3a71fc8d711886f350588d0b79d9833962f443dc354238b63d102110"
+    },
+    {
+      "name": "gen-1",
+      "requestMatch": {
+        "method": "GET",
+        "path": "/base/v1"
+      },
+      "responseTemplate": {
+        "body": {
+          "n": 2,
+          "stableId": "f81f696e-edb1-4ad4-84d7-30148c7c9941"
+        },
+        "status": 200
+      },
+      "meta": {
+        "from": "dsl",
+        "i": 1
+      },
+      "derivedSeed": "c42ebc1669878abe27e70e23f004def3a465ebac782e905bd9cba72b5739b845"
+    }
+  ],
+  "warnings": []
+}
