@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --page-bg: #eef2f7;
+  --page-spot: rgba(56, 189, 248, 0.22);
+  --page-spot-2: rgba(125, 211, 252, 0.18);
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(148, 163, 184, 0.4);
+  --text-primary: #0f172a;
+  --text-muted: #475569;
+  --ring: rgba(14, 165, 233, 0.35);
+  --accent: #0ea5e9;
+  --glass-highlight: rgba(255, 255, 255, 0.6);
+  --glass-shadow: rgba(15, 23, 42, 0.12);
+}
+
+.dark {
+  color-scheme: dark;
+  --page-bg: #0b0f19;
+  --page-spot: rgba(30, 41, 59, 0.9);
+  --page-spot-2: rgba(56, 189, 248, 0.25);
+  --card-bg: rgba(17, 25, 40, 0.65);
+  --card-border: rgba(148, 163, 184, 0.2);
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --ring: rgba(56, 189, 248, 0.35);
+  --accent: #38bdf8;
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+  --glass-shadow: rgba(8, 15, 30, 0.4);
+}
+
+* {
+  border-color: var(--card-border);
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--text-primary);
+  font-family: var(--font-space), ui-sans-serif, system-ui;
+  min-height: 100vh;
+}
+
+code,
+pre {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.glass-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-sheen::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    120deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.75) 50%,
+    transparent 80%
+  );
+  opacity: 0;
+  transform: translateX(-120%);
+  transition: transform 0.8s ease, opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.glass-sheen:hover::after {
+  opacity: 0.9;
+  transform: translateX(120%);
+}
+
+.dark .glass-sheen::after {
+  background: linear-gradient(
+    120deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 80%
+  );
+}
