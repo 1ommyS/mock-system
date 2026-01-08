@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	"dsl-runner-svc/internal/application"
 	"dsl-runner-svc/internal/domain"
@@ -21,7 +22,12 @@ func (c *Consumer) Run(ctx context.Context) error {
 	for {
 		msg, err := c.Reader.FetchMessage(ctx)
 		if err != nil {
-			return err
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			c.Logger.Error("kafka fetch failed", "error", err)
+			time.Sleep(500 * time.Millisecond)
+			continue
 		}
 		if err := c.handleMessage(ctx, msg); err != nil {
 			if application.IsTransient(err) {
@@ -41,5 +47,6 @@ func (c *Consumer) handleMessage(ctx context.Context, msg kafka.Message) error {
 	if err := json.Unmarshal(msg.Value, &payload); err != nil {
 		return err
 	}
+	c.Logger.Info("job received", "job_id", payload.JobID, "job_key", payload.JobKey, "mode", payload.Mode)
 	return c.Handler.Process(ctx, payload)
 }

@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import type { ApiError } from "@/lib/api/errors";
-import { getMock, updateMock, type Mock } from "@/lib/api/mocks";
-import { getUserContext, isAuthenticated } from "@/lib/auth/session";
-import { MockForm, type MockFormValues } from "@/components/mocks/mock-form";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ApiError } from "@/shared/api/errors";
+import { getMock, updateMock, type Mock } from "@/entities/mock/api/mocks";
+import { getUserContext, isAuthenticated } from "@/entities/user/model/session";
+import { MockForm, type MockFormValues } from "@/features/mocks/ui/mock-form";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 
 function isApiError(error: unknown): error is ApiError {
   return Boolean(error && typeof error === "object" && "message" in error);

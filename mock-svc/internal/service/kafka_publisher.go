@@ -14,14 +14,15 @@ type KafkaPublisher struct {
 func NewKafkaPublisher(brokers []string, topic string) *KafkaPublisher {
 	return &KafkaPublisher{
 		Writer: &kafka.Writer{
-			Addr:     kafka.TCP(brokers...),
-			Topic:    topic,
-			Balancer: &kafka.Hash{},
+			Addr:                   kafka.TCP(brokers...),
+			Topic:                  topic,
+			Balancer:               &kafka.Hash{},
+			AllowAutoTopicCreation: true,
 		},
 		Topic: topic,
 	}
 }
 
 func (p *KafkaPublisher) Publish(ctx context.Context, key, value []byte) error {
-	return p.Writer.WriteMessages(ctx, kafka.Message{Key: key, Value: value, Topic: p.Topic})
+	return p.Writer.WriteMessages(ctx, kafka.Message{Key: key, Value: value})
 }

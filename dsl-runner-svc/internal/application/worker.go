@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"dsl-runner-svc/internal/domain"
@@ -18,11 +19,15 @@ type JobHandler struct {
 }
 
 func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
+	slog.Info("job processing started", "job_id", msg.JobID, "job_key", msg.JobKey, "mode", msg.Mode)
 	if err := validateJobMessage(msg); err != nil {
+		slog.Error("job validation failed", "job_id", msg.JobID, "job_key", msg.JobKey, "error", err)
 		return err
 	}
 	if msg.DSLScript == nil || *msg.DSLScript == "" {
-		return NewCodeError(ErrCodeInvalidJobPayload, fmt.Errorf("dslScript required"))
+		err := NewCodeError(ErrCodeInvalidJobPayload, fmt.Errorf("dslScript required"))
+		slog.Error("job payload invalid", "job_id", msg.JobID, "job_key", msg.JobKey, "error", err)
+		return err
 	}
 
 	scriptText := *msg.DSLScript
@@ -60,6 +65,7 @@ func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
 
 	created, inserted, err := h.Service.Repos.Jobs.CreateIfAbsent(ctx, nil, job)
 	if err != nil {
+		slog.Error("job create failed", "job_id", msg.JobID, "job_key", msg.JobKey, "error", err)
 		return err
 	}
 	job = created
@@ -67,8 +73,10 @@ func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
 	if !inserted {
 		switch job.Status {
 		case domain.JobStatusDone, domain.JobStatusFailed:
+			slog.Info("job already completed", "job_id", job.JobID, "status", job.Status)
 			return h.publishResult(ctx, job)
 		case domain.JobStatusRunning:
+			slog.Info("job already running", "job_id", job.JobID)
 			return NewTransient(fmt.Errorf("job %s already running", job.JobID))
 		}
 	}
@@ -76,11 +84,13 @@ func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
 	attempt := job.Attempt + 1
 	if attempt > h.Service.MaxAttempts {
 		err := fmt.Errorf("max attempts exceeded")
+		slog.Error("job max attempts exceeded", "job_id", job.JobID, "attempt", attempt, "error", err)
 		h.handleFailure(ctx, job.JobID, attempt, err)
 		return nil
 	}
 	startedAt := time.Now().UTC()
 	if err := h.Service.Repos.Jobs.UpdateStatus(ctx, nil, job.JobID, domain.JobStatusRunning, attempt, &startedAt, nil, nil, nil); err != nil {
+		slog.Error("job status update failed", "job_id", job.JobID, "error", err)
 		return err
 	}
 
@@ -92,11 +102,14 @@ func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
 		Limits:     msg.Limits,
 	}
 
+	slog.Info("job execute start", "job_id", job.JobID, "attempt", attempt)
 	execRes, err := h.Service.Executor.Run(execInput)
 	if err != nil {
+		slog.Error("job execute failed", "job_id", job.JobID, "attempt", attempt, "error", err)
 		h.handleFailure(ctx, job.JobID, attempt, err)
 		return err
 	}
+	slog.Info("job execute done", "job_id", job.JobID, "generated", len(execRes.Generated))
 
 	warnings := execRes.Warnings
 	if warnings == nil {
@@ -111,6 +124,7 @@ func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
 	}
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
+		slog.Error("job result marshal failed", "job_id", job.JobID, "error", err)
 		h.handleFailure(ctx, job.JobID, attempt, err)
 		return err
 	}
@@ -127,9 +141,11 @@ func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
 		}
 		return h.Service.Repos.Jobs.UpdateStatus(ctx, tx, job.JobID, domain.JobStatusDone, attempt, &startedAt, &finishedAt, nil, nil)
 	}); err != nil {
+		slog.Error("job result persist failed", "job_id", job.JobID, "error", err)
 		return err
 	}
 
+	slog.Info("job result persisted", "job_id", job.JobID)
 	return h.publishResult(ctx, domain.Job{
 		JobID:      job.JobID,
 		JobKey:     job.JobKey,
@@ -184,7 +200,12 @@ func (h *JobHandler) publishResult(ctx context.Context, job domain.Job) error {
 		}
 		msg.Error = &domain.JobError{Code: code, Message: message}
 	}
-	return h.Service.Publisher.Publish(ctx, msg)
+	slog.Info("job result publish", "job_id", job.JobID, "status", job.Status)
+	if err := h.Service.Publisher.Publish(ctx, msg); err != nil {
+		slog.Error("job result publish failed", "job_id", job.JobID, "error", err)
+		return err
+	}
+	return nil
 }
 
 func validateJobMessage(msg domain.JobMessage) error {

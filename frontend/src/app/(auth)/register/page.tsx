@@ -7,13 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Eye, EyeOff, UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { getMe, loginUser, registerUser } from "@/lib/api/auth";
-import type { ApiError } from "@/lib/api/errors";
-import { clearTokens, storeTokens, storeUserContext } from "@/lib/auth/session";
-import { authLoggedIn } from "@/lib/state/auth";
-import { registerSchema, type RegisterFormValues } from "@/lib/validation/auth";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { getMe, loginUser, registerUser } from "@/features/auth/api/auth";
+import type { ApiError } from "@/shared/api/errors";
+import { clearTokens, storeTokens, storeUserContext } from "@/entities/user/model/session";
+import { authLoggedIn } from "@/entities/user/model/auth";
+import { registerSchema, type RegisterFormValues } from "@/features/auth/model/validation";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
+import { Button } from "@/shared/ui/button";
 import {
   Card,
   CardContent,
@@ -21,9 +21,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+} from "@/shared/ui/card";
+import { Input } from "@/shared/ui/input";
+import { Separator } from "@/shared/ui/separator";
 
 function isApiError(error: unknown): error is ApiError {
   return Boolean(error && typeof error === "object" && "message" in error);

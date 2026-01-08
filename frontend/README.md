@@ -9,12 +9,15 @@ bun dev
 
 ## Настройка API
 
-Создайте файл `.env.local` в `frontend` и добавьте базовый URL сервиса:
+Создайте файл `.env` (или `.env.local`) в `frontend` и добавьте базовые URL:
 
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 NEXT_PUBLIC_MOCK_API_BASE_URL=http://localhost:8081
+USER_SVC_INTERNAL_SECRET=dev-secret
 ```
+
+`USER_SVC_INTERNAL_SECRET` используется серверным route для регистрации `dsl_script` ресурсов.
 
 ## Генерация OpenAPI клиента
 
@@ -36,12 +39,21 @@ bun run gen:mock-api
 bun run storybook
 ```
 
+## Тесты
+
+```bash
+bun run test
+```
+
+JUnit отчет сохраняется в `frontend/reports/junit.xml`.
+
 ## Страницы
 
 - `/login`
 - `/register`
 - `/profile` (защищенная страница)
 - `/mocks` (интерфейс mock-svc)
+- `/dsl-runner` (генерация моков через DSL)
 
 ## Заметки по авторизации
 

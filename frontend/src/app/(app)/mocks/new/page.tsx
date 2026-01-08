@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { createMock } from "@/lib/api/mocks";
-import { getUserContext, isAuthenticated } from "@/lib/auth/session";
-import { MockForm, type MockFormValues } from "@/components/mocks/mock-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createMock } from "@/entities/mock/api/mocks";
+import { getUserContext, isAuthenticated } from "@/entities/user/model/session";
+import { MockForm, type MockFormValues } from "@/features/mocks/ui/mock-form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 
 export default function NewMockPage() {
   const router = useRouter();

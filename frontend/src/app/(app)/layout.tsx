@@ -16,6 +16,9 @@ export default function AppLayout({
           <Link className="hover:text-[var(--text-primary)]" href="/mocks">
             Моки
           </Link>
+          <Link className="hover:text-[var(--text-primary)]" href="/dsl-runner">
+            DSL Runner
+          </Link>
           <Link className="hover:text-[var(--text-primary)]" href="/profile">
             Профиль
           </Link>

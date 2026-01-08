@@ -17,9 +17,10 @@ type ResultPublisher struct {
 func NewResultPublisher(brokers []string, topic string) *ResultPublisher {
 	return &ResultPublisher{
 		Writer: &kafka.Writer{
-			Addr:     kafka.TCP(brokers...),
-			Topic:    topic,
-			Balancer: &kafka.Hash{},
+			Addr:                   kafka.TCP(brokers...),
+			Topic:                  topic,
+			Balancer:               &kafka.Hash{},
+			AllowAutoTopicCreation: true,
 		},
 		Topic: topic,
 	}
@@ -33,7 +34,6 @@ func (p *ResultPublisher) Publish(ctx context.Context, msg domain.ResultMessage)
 	kmsg := kafka.Message{
 		Key:   []byte(msg.JobKey),
 		Value: data,
-		Topic: p.Topic,
 	}
 	return p.Writer.WriteMessages(ctx, kmsg)
 }

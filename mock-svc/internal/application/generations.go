@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"mock-svc/internal/domain"
 
@@ -25,6 +26,15 @@ type GenerationInput struct {
 }
 
 func (s *Service) PreviewGeneration(ctx context.Context, token, userID string, input GenerationInput) ([]GeneratedMock, error) {
+	slog.Info(
+		"generation preview start",
+		"user_id",
+		userID,
+		"base_mock_id",
+		input.BaseMockID,
+		"dsl_script_id",
+		input.DSLScriptID,
+	)
 	if input.BaseMockID == "" || input.DSLScriptID == "" || input.DSLScript == "" {
 		return nil, ErrInvalidRequest
 	}
@@ -40,8 +50,30 @@ func (s *Service) PreviewGeneration(ctx context.Context, token, userID string, i
 	}
 	planned, err := s.DSL.Preview(ctx, toDSLBaseMock(base), input.DSLScriptID, input.DSLScript, input.Params)
 	if err != nil {
+		slog.Error(
+			"generation preview failed",
+			"user_id",
+			userID,
+			"base_mock_id",
+			input.BaseMockID,
+			"dsl_script_id",
+			input.DSLScriptID,
+			"error",
+			err,
+		)
 		return nil, err
 	}
+	slog.Info(
+		"generation preview done",
+		"user_id",
+		userID,
+		"base_mock_id",
+		input.BaseMockID,
+		"dsl_script_id",
+		input.DSLScriptID,
+		"count",
+		len(planned),
+	)
 	return planned, nil
 }
 
@@ -80,6 +112,18 @@ func (s *Service) StartGeneration(ctx context.Context, token, userID string, inp
 	if err != nil {
 		return domain.Generation{}, err
 	}
+
+	slog.Info(
+		"generation apply queued",
+		"generation_id",
+		created.ID,
+		"user_id",
+		userID,
+		"base_mock_id",
+		base.ID,
+		"dsl_script_id",
+		input.DSLScriptID,
+	)
 
 	go s.runGeneration(created.ID, base, input.DSLScriptID, input.DSLScript, input.Params, userID)
 	return created, nil
@@ -131,6 +175,15 @@ func (s *Service) checkGenerationAccess(ctx context.Context, token, baseMockID, 
 
 func (s *Service) runGeneration(generationID string, base domain.Mock, dslScriptID string, dslScript string, params json.RawMessage, initiator string) {
 	ctx := context.Background()
+	slog.Info(
+		"generation apply started",
+		"generation_id",
+		generationID,
+		"base_mock_id",
+		base.ID,
+		"dsl_script_id",
+		dslScriptID,
+	)
 	_ = s.Tx.WithTx(ctx, func(tx *sqlx.Tx) error {
 		return s.Repos.Generations.UpdateStatus(ctx, tx, generationID, GenerationRunning, nil, nil)
 	})
@@ -140,6 +193,14 @@ func (s *Service) runGeneration(generationID string, base domain.Mock, dslScript
 		s.failGeneration(ctx, generationID, fmt.Sprintf("dsl apply error: %v", err))
 		return
 	}
+
+	slog.Info(
+		"generation apply produced",
+		"generation_id",
+		generationID,
+		"count",
+		len(derived),
+	)
 
 	for _, item := range derived {
 		if err := validateGeneratedMock(item); err != nil {
@@ -207,6 +268,7 @@ func (s *Service) runGeneration(generationID string, base domain.Mock, dslScript
 }
 
 func (s *Service) failGeneration(ctx context.Context, generationID, message string) {
+	slog.Error("generation failed", "generation_id", generationID, "error", message)
 	_ = s.Tx.WithTx(ctx, func(tx *sqlx.Tx) error {
 		return s.Repos.Generations.UpdateStatus(ctx, tx, generationID, GenerationFailed, nil, &message)
 	})

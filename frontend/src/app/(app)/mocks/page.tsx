@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { ApiError } from "@/lib/api/errors";
-import { deleteMock, listMocks, type Mock } from "@/lib/api/mocks";
-import { getUserContext, isAuthenticated } from "@/lib/auth/session";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import type { ApiError } from "@/shared/api/errors";
+import { deleteMock, listMocks, type Mock } from "@/entities/mock/api/mocks";
+import { getUserContext, isAuthenticated } from "@/entities/user/model/session";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/ui/alert";
+import { Button } from "@/shared/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
+import { Input } from "@/shared/ui/input";
 
 function isApiError(error: unknown): error is ApiError {
   return Boolean(error && typeof error === "object" && "message" in error);

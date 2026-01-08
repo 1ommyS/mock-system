@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "gen:api": "bunx openapi-typescript ../user-svc/internal/http/swagger/openapi.yaml -o src/lib/api/openapi.ts",
-    "gen:mock-api": "bunx openapi-typescript ../mock-svc/internal/http/swagger/openapi.yaml -o src/lib/api/mock-openapi.ts",
+    "test": "mkdir -p reports && vitest run",
+    "gen:api": "bunx openapi-typescript ../user-svc/internal/http/swagger/openapi.yaml -o src/shared/api/openapi.ts",
+    "gen:mock-api": "bunx openapi-typescript ../mock-svc/internal/http/swagger/openapi.yaml -o src/shared/api/mock-openapi.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -53,7 +54,8 @@
     "openapi-typescript": "^7.10.1",
     "storybook": "8.6.14",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   },
   "ignoreScripts": [
     "sharp",

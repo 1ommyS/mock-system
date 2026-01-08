@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -95,9 +96,6 @@ func NewDSLRunnerClient(cfg DSLRunnerConfig) *DSLRunnerClient {
 		pollTimeout = 5 * time.Second
 	}
 	jobIDFn := cfg.JobIDFn
-	if jobIDFn == nil {
-		jobIDFn = func() string { return newUUID() }
-	}
 	nowFn := cfg.NowFn
 	if nowFn == nil {
 		nowFn = func() time.Time { return time.Now().UTC() }
@@ -129,7 +127,6 @@ func (c *DSLRunnerClient) run(ctx context.Context, mode string, baseMock applica
 	if dslScript == "" {
 		return nil, fmt.Errorf("dslScript is required")
 	}
-	jobID := c.jobIDFn()
 	createdAt := c.nowFn()
 	baseMockPayload, err := buildBaseMockPayload(baseMock)
 	if err != nil {
@@ -150,6 +147,29 @@ func (c *DSLRunnerClient) run(ctx context.Context, mode string, baseMock applica
 	seed := sha256Hex([]byte(scriptHash + ":" + baseCanon + ":" + paramsCanon + ":" + mode))
 	inputHash := sha256Hex([]byte(baseCanon + paramsCanon + seed + scriptHash))
 	jobKey := sha256Hex([]byte(scriptHash + ":" + inputHash + ":" + mode))
+	jobID := ""
+	if c.jobIDFn != nil {
+		jobID = c.jobIDFn()
+	}
+	if jobID == "" {
+		jobID = deterministicUUID(jobKey)
+	}
+
+	slog.Info(
+		"dsl runner job enqueue",
+		"job_id",
+		jobID,
+		"job_key",
+		jobKey,
+		"mode",
+		mode,
+		"base_mock_id",
+		baseMock.ID,
+		"dsl_script_id",
+		dslScriptID,
+		"script_hash",
+		scriptHash,
+	)
 
 	msg := jobMessage{
 		JobID:       jobID,
@@ -170,6 +190,17 @@ func (c *DSLRunnerClient) run(ctx context.Context, mode string, baseMock applica
 		return nil, err
 	}
 	if err := c.publisher.Publish(ctx, []byte(jobKey), payload); err != nil {
+		slog.Error(
+			"dsl runner publish failed",
+			"job_id",
+			jobID,
+			"job_key",
+			jobKey,
+			"mode",
+			mode,
+			"error",
+			err,
+		)
 		return nil, err
 	}
 
@@ -179,7 +210,33 @@ func (c *DSLRunnerClient) run(ctx context.Context, mode string, baseMock applica
 		pollCtx, cancel = context.WithTimeout(ctx, c.pollTimeout)
 		defer cancel()
 	}
-	return c.waitForResult(pollCtx, jobID)
+	result, err := c.waitForResult(pollCtx, jobID)
+	if err != nil {
+		slog.Error(
+			"dsl runner result failed",
+			"job_id",
+			jobID,
+			"job_key",
+			jobKey,
+			"mode",
+			mode,
+			"error",
+			err,
+		)
+		return nil, err
+	}
+	slog.Info(
+		"dsl runner result ready",
+		"job_id",
+		jobID,
+		"job_key",
+		jobKey,
+		"mode",
+		mode,
+		"generated",
+		len(result),
+	)
+	return result, nil
 }
 
 func (c *DSLRunnerClient) waitForResult(ctx context.Context, jobID string) ([]application.GeneratedMock, error) {
@@ -285,6 +342,14 @@ func newUUID() string {
 	if err != nil {
 		return ""
 	}
+	b[6] = (b[6] & 0x0f) | 0x40
+	b[8] = (b[8] & 0x3f) | 0x80
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
+}
+
+func deterministicUUID(seed string) string {
+	sum := sha256.Sum256([]byte(seed))
+	b := sum[:16]
 	b[6] = (b[6] & 0x0f) | 0x40
 	b[8] = (b[8] & 0x3f) | 0x80
 	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
