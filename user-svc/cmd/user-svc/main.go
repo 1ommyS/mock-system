@@ -15,6 +15,7 @@ import (
 	"user-svc/internal/db"
 	httpserver "user-svc/internal/http"
 	"user-svc/internal/http/handlers"
+	"user-svc/internal/http/middleware"
 	"user-svc/internal/infrastructure/postgres"
 )
 
@@ -65,7 +66,15 @@ func main() {
 	}
 	services := application.New(repos, jwtSvc, cfg.AccessTTL, cfg.RefreshTTL)
 	handler := handlers.New(services)
-	router := httpserver.NewRouter(handler, jwtSvc)
+	router := httpserver.NewRouter(
+		handler,
+		jwtSvc,
+		middleware.CORSConfig{
+			AllowedOrigins:   cfg.CORSAllowedOrigins,
+			AllowCredentials: cfg.CORSAllowCredentials,
+		},
+		cfg.AuthInternalSecret,
+	)
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,

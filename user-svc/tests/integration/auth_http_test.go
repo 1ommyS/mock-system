@@ -13,6 +13,7 @@ import (
 	"user-svc/internal/auth"
 	httpserver "user-svc/internal/http"
 	"user-svc/internal/http/handlers"
+	"user-svc/internal/http/middleware"
 	"user-svc/internal/infrastructure/postgres"
 	"user-svc/tests/testutil"
 )
@@ -217,7 +218,12 @@ func newAuthServer(t *testing.T) (*httptest.Server, func()) {
 	}
 	services := application.New(repos, jwtSvc, 15*time.Minute, 30*24*time.Hour)
 	handler := handlers.New(services)
-	router := httpserver.NewRouter(handler, jwtSvc)
+	router := httpserver.NewRouter(
+		handler,
+		jwtSvc,
+		middleware.CORSConfig{},
+		"",
+	)
 	server := httptest.NewServer(router)
 
 	cleanup := func() {

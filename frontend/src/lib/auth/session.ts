@@ -4,9 +4,16 @@ export type AuthTokens = {
   expiresIn?: number | null;
 };
 
+export type UserContext = {
+  userId: string;
+  roles: string[];
+};
+
 const ACCESS_KEY = "dip_auth_access";
 const REFRESH_KEY = "dip_auth_refresh";
 const EXPIRES_KEY = "dip_auth_expires";
+const USER_ID_KEY = "dip_auth_user_id";
+const ROLES_KEY = "dip_auth_roles";
 
 function getStorage(remember: boolean) {
   return remember ? localStorage : sessionStorage;
@@ -28,6 +35,8 @@ export function clearTokens() {
     storage.removeItem(ACCESS_KEY);
     storage.removeItem(REFRESH_KEY);
     storage.removeItem(EXPIRES_KEY);
+    storage.removeItem(USER_ID_KEY);
+    storage.removeItem(ROLES_KEY);
   }
 }
 
@@ -55,4 +64,40 @@ export function isAuthenticated() {
 
 export function getAccessToken() {
   return getTokens()?.accessToken ?? null;
+}
+
+export function hasRememberedTokens() {
+  if (typeof window === "undefined") return false;
+  return Boolean(localStorage.getItem(ACCESS_KEY));
+}
+
+export function storeUserContext(context: UserContext, remember: boolean) {
+  if (typeof window === "undefined") return;
+  const storage = getStorage(remember);
+  storage.setItem(USER_ID_KEY, context.userId);
+  storage.setItem(ROLES_KEY, JSON.stringify(context.roles));
+}
+
+export function getUserContext(): UserContext | null {
+  if (typeof window === "undefined") return null;
+  const userId =
+    localStorage.getItem(USER_ID_KEY) ?? sessionStorage.getItem(USER_ID_KEY);
+  const rolesRaw =
+    localStorage.getItem(ROLES_KEY) ?? sessionStorage.getItem(ROLES_KEY);
+
+  if (!userId) return null;
+
+  let roles: string[] = [];
+  if (rolesRaw) {
+    try {
+      const parsed = JSON.parse(rolesRaw);
+      if (Array.isArray(parsed)) {
+        roles = parsed.filter((role) => typeof role === "string");
+      }
+    } catch {
+      roles = [];
+    }
+  }
+
+  return { userId, roles };
 }

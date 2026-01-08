@@ -44,7 +44,7 @@ func (h *Handler) AdminUpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := strings.TrimPrefix(r.URL.Path, "/auth/v1/admin/users/")
 	if userID == "" || userID == "/auth/v1/admin/users" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "userId is required in path")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуется userId в пути.")
 		return
 	}
 	var req AdminUpdateUserRequest
@@ -90,11 +90,11 @@ func (h *Handler) AdminUpdateResource(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/authz/v1/admin/resources/")
 	parts := strings.Split(path, "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "resourceType and resourceId are required in path")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуются resourceType и resourceId в пути.")
 		return
 	}
 	if !isValidResourceType(parts[0]) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "unsupported resourceType")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Неподдерживаемый тип ресурса.")
 		return
 	}
 	var req AdminUpdateResourceRequest
@@ -102,7 +102,7 @@ func (h *Handler) AdminUpdateResource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.OwnerUserID == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "ownerUserId is required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуется ownerUserId.")
 		return
 	}
 	res, err := h.Services.UpdateResourceOwner(r.Context(), parts[0], parts[1], req.OwnerUserID)

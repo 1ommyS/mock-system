@@ -9,7 +9,7 @@ import (
 	"mock-svc/internal/http/swagger"
 )
 
-func NewRouter(h *handlers.Handler) http.Handler {
+func NewRouter(h *handlers.Handler, corsConfig middleware.CORSConfig) http.Handler {
 	mux := http.NewServeMux()
 
 	authMW := middleware.WithContext()
@@ -81,10 +81,11 @@ func NewRouter(h *handlers.Handler) http.Handler {
 	mux.Handle("/swagger/", http.HandlerFunc(swagger.UIHandler))
 	mux.Handle("/swagger", http.HandlerFunc(swagger.UIHandler))
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = cleanPath(r.URL.Path)
 		mux.ServeHTTP(w, r)
 	})
+	return middleware.WithCORS(corsConfig)(handler)
 }
 
 func chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {

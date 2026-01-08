@@ -15,9 +15,15 @@ const (
 	rolesKey  ctxKey = "roles"
 )
 
-func WithAuth(jwtSvc *auth.JWTService) func(http.Handler) http.Handler {
+func WithAuth(jwtSvc *auth.JWTService, internalSecret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if internalSecret != "" && isInternalAuth(r, internalSecret) {
+				ctx := context.WithValue(r.Context(), userIDKey, "internal")
+				ctx = context.WithValue(ctx, rolesKey, []string{"ADMIN"})
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 				w.WriteHeader(http.StatusUnauthorized)
@@ -34,6 +40,17 @@ func WithAuth(jwtSvc *auth.JWTService) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func isInternalAuth(r *http.Request, secret string) bool {
+	if r.Method != http.MethodPost {
+		return false
+	}
+	path := r.URL.Path
+	if path != "/authz/v1/resources" && path != "/authz/v1/resources/" {
+		return false
+	}
+	return r.Header.Get("X-Internal-Secret") == secret
 }
 
 func RequireRole(role string) func(http.Handler) http.Handler {

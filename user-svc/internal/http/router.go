@@ -10,10 +10,15 @@ import (
 	"user-svc/internal/http/swagger"
 )
 
-func NewRouter(h *handlers.Handler, jwtSvc *auth.JWTService) http.Handler {
+func NewRouter(
+	h *handlers.Handler,
+	jwtSvc *auth.JWTService,
+	corsConfig middleware.CORSConfig,
+	internalSecret string,
+) http.Handler {
 	mux := http.NewServeMux()
 
-	authMW := middleware.WithAuth(jwtSvc)
+	authMW := middleware.WithAuth(jwtSvc, internalSecret)
 	adminMW := middleware.RequireRole("ADMIN")
 
 	mux.HandleFunc("/healthz", h.Healthz)
@@ -61,10 +66,11 @@ func NewRouter(h *handlers.Handler, jwtSvc *auth.JWTService) http.Handler {
 	mux.Handle("/swagger/", http.HandlerFunc(swagger.UIHandler))
 	mux.Handle("/swagger", http.HandlerFunc(swagger.UIHandler))
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = cleanPath(r.URL.Path)
 		mux.ServeHTTP(w, r)
 	})
+	return middleware.WithCORS(corsConfig)(handler)
 }
 
 func chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {

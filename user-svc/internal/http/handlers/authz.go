@@ -88,11 +88,11 @@ func (h *Handler) RegisterResource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.ResourceType == "" || req.ResourceID == "" || req.OwnerUserID == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "resourceType, resourceId, ownerUserId are required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуются resourceType, resourceId, ownerUserId.")
 		return
 	}
 	if !isValidResourceType(req.ResourceType) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "unsupported resourceType")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Неподдерживаемый тип ресурса.")
 		return
 	}
 	res, created, err := h.Services.RegisterResource(r.Context(), req.ResourceType, req.ResourceID, req.OwnerUserID)
@@ -134,16 +134,16 @@ func (h *Handler) CheckAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.ResourceType == "" || req.ResourceID == "" || req.Action == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "resourceType, resourceId, action are required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуются resourceType, resourceId, action.")
 		return
 	}
 	if !isValidResourceType(req.ResourceType) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "unsupported resourceType")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Неподдерживаемый тип ресурса.")
 		return
 	}
 	userID, ok := userIDFromContext(r)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user")
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется авторизация.")
 		return
 	}
 	allowed, effective, isOwner, err := h.Services.CheckAccess(r.Context(), userID, req.ResourceType, req.ResourceID, req.Action)
@@ -178,20 +178,20 @@ func (h *Handler) ListResources(w http.ResponseWriter, r *http.Request) {
 	resourceType := r.URL.Query().Get("resourceType")
 	minPermission := r.URL.Query().Get("minPermission")
 	if resourceType == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "resourceType is required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуется resourceType.")
 		return
 	}
 	if !isValidResourceType(resourceType) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "unsupported resourceType")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Неподдерживаемый тип ресурса.")
 		return
 	}
 	if minPermission != "" && !isValidMinPermission(minPermission) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid minPermission")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Некорректное минимальное разрешение.")
 		return
 	}
 	userID, ok := userIDFromContext(r)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user")
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется авторизация.")
 		return
 	}
 	items, err := h.Services.ListResources(r.Context(), userID, resourceType, minPermission)
@@ -233,20 +233,20 @@ func (h *Handler) CreateGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.ResourceType == "" || req.ResourceID == "" || req.GranteeUserID == "" || req.Permission == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "resourceType, resourceId, granteeUserId, permission are required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуются resourceType, resourceId, granteeUserId, permission.")
 		return
 	}
 	if !isValidResourceType(req.ResourceType) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "unsupported resourceType")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Неподдерживаемый тип ресурса.")
 		return
 	}
 	if !isValidGrantPermission(req.Permission) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "invalid permission")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Некорректное разрешение.")
 		return
 	}
 	userID, ok := userIDFromContext(r)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user")
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется авторизация.")
 		return
 	}
 	grant, err := h.Services.CreateGrant(r.Context(), userID, rolesFromContext(r), req.ResourceType, req.ResourceID, req.GranteeUserID, strings.ToUpper(req.Permission))
@@ -280,16 +280,16 @@ func (h *Handler) DeleteGrant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.ResourceType == "" || req.ResourceID == "" || req.GranteeUserID == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "resourceType, resourceId, granteeUserId are required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуются resourceType, resourceId, granteeUserId.")
 		return
 	}
 	if !isValidResourceType(req.ResourceType) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "unsupported resourceType")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Неподдерживаемый тип ресурса.")
 		return
 	}
 	userID, ok := userIDFromContext(r)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user")
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется авторизация.")
 		return
 	}
 	if err := h.Services.DeleteGrant(r.Context(), userID, rolesFromContext(r), req.ResourceType, req.ResourceID, req.GranteeUserID); err != nil {
@@ -319,16 +319,16 @@ func (h *Handler) ListGrants(w http.ResponseWriter, r *http.Request) {
 	resourceType := r.URL.Query().Get("resourceType")
 	resourceID := r.URL.Query().Get("resourceId")
 	if resourceType == "" || resourceID == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "resourceType and resourceId are required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуются resourceType и resourceId.")
 		return
 	}
 	if !isValidResourceType(resourceType) {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "unsupported resourceType")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Неподдерживаемый тип ресурса.")
 		return
 	}
 	userID, ok := userIDFromContext(r)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user")
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется авторизация.")
 		return
 	}
 	grants, err := h.Services.ListGrants(r.Context(), userID, rolesFromContext(r), resourceType, resourceID)

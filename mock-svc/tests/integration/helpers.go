@@ -13,6 +13,7 @@ import (
 	"mock-svc/internal/application"
 	httpserver "mock-svc/internal/http"
 	"mock-svc/internal/http/handlers"
+	"mock-svc/internal/http/middleware"
 	"mock-svc/internal/infrastructure/postgres"
 	"mock-svc/tests/testutil"
 
@@ -133,7 +134,7 @@ func newMockServer(t *testing.T) *testServer {
 	}
 	services := application.New(repos, store, authClient, dsl, 3)
 	handler := handlers.New(services)
-	router := httpserver.NewRouter(handler)
+	router := httpserver.NewRouter(handler, middleware.CORSConfig{})
 	server := httptest.NewServer(router)
 
 	return &testServer{

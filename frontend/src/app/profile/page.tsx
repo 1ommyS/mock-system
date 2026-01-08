@@ -3,12 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { logoutUser } from "@/lib/api/auth";
+import { getMe, logoutUser } from "@/lib/api/auth";
 import {
   clearTokens,
   getAccessToken,
   getTokens,
+  hasRememberedTokens,
+  getUserContext,
   isAuthenticated,
+  storeUserContext,
 } from "@/lib/auth/session";
 import { authLoggedIn, authLoggedOut } from "@/lib/state/auth";
 import { Button } from "@/components/ui/button";
@@ -17,21 +20,62 @@ export default function ProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<string | null>(null);
 
   useEffect(() => {
-    const tokens = getTokens();
-    if (tokens?.accessToken && tokens?.refreshToken) {
-      authLoggedIn({
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      });
-    }
+    const init = async () => {
+      const tokens = getTokens();
+      if (!tokens?.accessToken || !tokens.refreshToken) {
+        router.replace("/login?next=/profile");
+        return;
+      }
 
-    if (!isAuthenticated()) {
-      router.replace("/login?next=/profile");
-      return;
-    }
-    setLoading(false);
+      const context = getUserContext();
+      if (!context?.userId) {
+        try {
+          const me = await getMe(tokens.accessToken);
+          if (me.userId) {
+            storeUserContext(
+              {
+                userId: me.userId,
+                roles: me.roles ?? [],
+              },
+              hasRememberedTokens()
+            );
+            authLoggedIn({
+              accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
+              userId: me.userId,
+              roles: me.roles ?? [],
+            });
+            setUserInfo(
+              `${me.userId}${me.roles?.length ? ` · ${me.roles.join(", ")}` : ""}`
+            );
+          }
+        } catch {
+          router.replace("/login?next=/profile");
+          return;
+        }
+      } else {
+        authLoggedIn({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          userId: context.userId,
+          roles: context.roles,
+        });
+        setUserInfo(
+          `${context.userId}${context.roles.length ? ` · ${context.roles.join(", ")}` : ""}`
+        );
+      }
+
+      if (!isAuthenticated()) {
+        router.replace("/login?next=/profile");
+        return;
+      }
+      setLoading(false);
+    };
+
+    void init();
   }, [router]);
 
   const handleLogout = async () => {
@@ -73,6 +117,11 @@ export default function ProfilePage() {
           <p className="mt-3 text-sm text-[var(--text-muted)]">
             Сессия активна. Добро пожаловать в защищенный раздел.
           </p>
+          {userInfo ? (
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              {userInfo}
+            </p>
+          ) : null}
           {error ? (
             <p className="mt-4 text-sm text-rose-600 dark:text-rose-300">
               {error}

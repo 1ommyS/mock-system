@@ -13,6 +13,7 @@ bun dev
 
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+NEXT_PUBLIC_MOCK_API_BASE_URL=http://localhost:8081
 ```
 
 ## Генерация OpenAPI клиента
@@ -21,6 +22,12 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 ```bash
 bun run gen:api
+```
+
+Моки:
+
+```bash
+bun run gen:mock-api
 ```
 
 ## Storybook
@@ -34,6 +41,7 @@ bun run storybook
 - `/login`
 - `/register`
 - `/profile` (защищенная страница)
+- `/mocks` (интерфейс mock-svc)
 
 ## Заметки по авторизации
 

@@ -7,9 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Eye, EyeOff, UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { loginUser, registerUser } from "@/lib/api/auth";
+import { getMe, loginUser, registerUser } from "@/lib/api/auth";
 import type { ApiError } from "@/lib/api/errors";
-import { storeTokens } from "@/lib/auth/session";
+import { clearTokens, storeTokens, storeUserContext } from "@/lib/auth/session";
 import { authLoggedIn } from "@/lib/state/auth";
 import { registerSchema, type RegisterFormValues } from "@/lib/validation/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -34,7 +34,7 @@ export default function RegisterPage() {
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
   const nextPath =
-    nextParam && nextParam.startsWith("/") ? nextParam : "/profile";
+    nextParam && nextParam.startsWith("/") ? nextParam : "/mocks";
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
@@ -82,9 +82,25 @@ export default function RegisterPage() {
         },
         remember
       );
+
+      const me = await getMe(token.accessToken);
+      if (!me.userId) {
+        setServerError("Не удалось получить профиль пользователя.");
+        clearTokens();
+        return;
+      }
+      storeUserContext(
+        {
+          userId: me.userId,
+          roles: me.roles ?? [],
+        },
+        remember
+      );
       authLoggedIn({
         accessToken: token.accessToken,
         refreshToken: token.refreshToken,
+        userId: me.userId,
+        roles: me.roles ?? [],
       });
 
       router.replace(nextPath);

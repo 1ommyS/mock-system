@@ -10,6 +10,7 @@ import (
 	"user-svc/internal/auth"
 	httpserver "user-svc/internal/http"
 	"user-svc/internal/http/handlers"
+	"user-svc/internal/http/middleware"
 	"user-svc/internal/infrastructure/postgres"
 	"user-svc/tests/testutil"
 
@@ -19,7 +20,12 @@ import (
 
 func TestHealthz(t *testing.T) {
 	handler := handlers.New(nil)
-	router := httpserver.NewRouter(handler, auth.NewJWTService("secret", "issuer", "aud"))
+	router := httpserver.NewRouter(
+		handler,
+		auth.NewJWTService("secret", "issuer", "aud"),
+		middleware.CORSConfig{},
+		"",
+	)
 
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	rr := httptest.NewRecorder()
@@ -33,7 +39,12 @@ func TestHealthz(t *testing.T) {
 
 func TestHealthz_MethodNotAllowed(t *testing.T) {
 	handler := handlers.New(nil)
-	router := httpserver.NewRouter(handler, auth.NewJWTService("secret", "issuer", "aud"))
+	router := httpserver.NewRouter(
+		handler,
+		auth.NewJWTService("secret", "issuer", "aud"),
+		middleware.CORSConfig{},
+		"",
+	)
 
 	req := httptest.NewRequest(http.MethodPost, "/healthz", nil)
 	rr := httptest.NewRecorder()
@@ -47,7 +58,12 @@ func TestHealthz_MethodNotAllowed(t *testing.T) {
 
 func TestProtectedEndpoint_NoAuth(t *testing.T) {
 	handler := handlers.New(nil)
-	router := httpserver.NewRouter(handler, auth.NewJWTService("secret", "issuer", "aud"))
+	router := httpserver.NewRouter(
+		handler,
+		auth.NewJWTService("secret", "issuer", "aud"),
+		middleware.CORSConfig{},
+		"",
+	)
 
 	req := httptest.NewRequest(http.MethodGet, "/auth/v1/me", nil)
 	rr := httptest.NewRecorder()
@@ -61,7 +77,12 @@ func TestProtectedEndpoint_NoAuth(t *testing.T) {
 
 func TestProtectedEndpoint_WithBadToken(t *testing.T) {
 	handler := handlers.New(nil)
-	router := httpserver.NewRouter(handler, auth.NewJWTService("secret", "issuer", "aud"))
+	router := httpserver.NewRouter(
+		handler,
+		auth.NewJWTService("secret", "issuer", "aud"),
+		middleware.CORSConfig{},
+		"",
+	)
 
 	req := httptest.NewRequest(http.MethodGet, "/auth/v1/me", nil)
 	req.Header.Set("Authorization", "Bearer invalid.token")
@@ -94,7 +115,12 @@ func TestProtectedEndpoint_WithValidToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("token error: %v", err)
 	}
-	router := httpserver.NewRouter(handler, jwtSvc)
+	router := httpserver.NewRouter(
+		handler,
+		jwtSvc,
+		middleware.CORSConfig{},
+		"",
+	)
 
 	now := time.Now()
 	userRows := sqlmock.NewRows([]string{

@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"strings"
+
+	"user-svc/internal/application"
 )
 
 type RegisterRequest struct {
@@ -61,11 +64,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Email == "" || req.Password == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "email and password are required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Email и пароль обязательны.")
 		return
 	}
 	userID, err := h.Services.Register(r.Context(), req.Email, req.Password)
 	if err != nil {
+		if errors.Is(err, application.ErrConflict) {
+			writeError(w, http.StatusConflict, "CONFLICT", "Аккаунт с таким email уже существует.")
+			return
+		}
 		if writeServiceError(w, err) {
 			return
 		}
@@ -94,7 +101,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.Email == "" || req.Password == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "email and password are required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Email и пароль обязательны.")
 		return
 	}
 	ip := clientIP(r)
@@ -133,7 +140,7 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.RefreshToken == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "refreshToken is required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуется refreshToken.")
 		return
 	}
 	tokenPair, err := h.Services.Refresh(r.Context(), req.RefreshToken)
@@ -171,7 +178,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if req.RefreshToken == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "refreshToken is required")
+		writeError(w, http.StatusBadRequest, "INVALID_REQUEST", "Требуется refreshToken.")
 		return
 	}
 	if err := h.Services.Logout(r.Context(), req.RefreshToken); err != nil {
@@ -198,7 +205,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 	userID, ok := userIDFromContext(r)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing user")
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Требуется авторизация.")
 		return
 	}
 	user, roles, err := h.Services.Me(r.Context(), userID)

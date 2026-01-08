@@ -1,0 +1,32 @@
+version: "3"
+
+tasks:
+  user-svc:
+    desc: Run user-svc
+    cmds:
+      - task -d user-svc run
+
+  mock-svc:
+    desc: Run mock-svc
+    cmds:
+      - task -d mock-svc run
+
+  dsl-runner-svc:
+    desc: Run dsl-runner-svc
+    cmds:
+      - task -d dsl-runner-svc run
+
+  frontend:
+    desc: Run frontend
+    dir: frontend
+    cmds:
+      - bun dev
+
+  dev:
+    desc: Run all services and frontend
+    deps:
+      - user-svc
+      - mock-svc
+      - dsl-runner-svc
+      - frontend
+    parallel: true

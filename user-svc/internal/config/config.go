@@ -11,14 +11,17 @@ import (
 )
 
 type Config struct {
-	HTTPAddr   string        `yaml:"http_addr"`
-	DBDSN      string        `yaml:"db_dsn"`
-	JWTSecret  string        `yaml:"jwt_secret"`
-	AccessTTL  time.Duration `yaml:"access_ttl"`
-	RefreshTTL time.Duration `yaml:"refresh_ttl"`
-	Issuer     string        `yaml:"issuer"`
-	Audience   string        `yaml:"audience"`
-	LogLevel   string        `yaml:"log_level"`
+	HTTPAddr             string        `yaml:"http_addr"`
+	DBDSN                string        `yaml:"db_dsn"`
+	JWTSecret            string        `yaml:"jwt_secret"`
+	AccessTTL            time.Duration `yaml:"access_ttl"`
+	RefreshTTL           time.Duration `yaml:"refresh_ttl"`
+	Issuer               string        `yaml:"issuer"`
+	Audience             string        `yaml:"audience"`
+	LogLevel             string        `yaml:"log_level"`
+	CORSAllowedOrigins   []string      `yaml:"cors_allowed_origins"`
+	CORSAllowCredentials bool          `yaml:"cors_allow_credentials"`
+	AuthInternalSecret   string        `yaml:"auth_internal_secret"`
 }
 
 func Load() (Config, error) {
@@ -54,6 +57,12 @@ func Load() (Config, error) {
 	}
 	if cfg.LogLevel == "" {
 		cfg.LogLevel = "info"
+	}
+	if len(cfg.CORSAllowedOrigins) == 0 {
+		cfg.CORSAllowedOrigins = []string{"http://localhost:3000"}
+	}
+	if cfg.AuthInternalSecret == "" {
+		cfg.AuthInternalSecret = "dev-secret"
 	}
 
 	if cfg.DBDSN == "" {

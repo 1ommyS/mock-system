@@ -14,6 +14,7 @@ import (
 	"mock-svc/internal/db"
 	httpserver "mock-svc/internal/http"
 	"mock-svc/internal/http/handlers"
+	"mock-svc/internal/http/middleware"
 	"mock-svc/internal/infrastructure/postgres"
 	"mock-svc/internal/service"
 )
@@ -58,7 +59,7 @@ func main() {
 		MockSearch:  store.MockSearch,
 		Outbox:      store.Outbox,
 	}
-	authClient := service.NewAuthClient(cfg.AuthBaseURL)
+	authClient := service.NewAuthClient(cfg.AuthBaseURL, cfg.AuthInternalSecret)
 	kafkaPublisher := service.NewKafkaPublisher(cfg.KafkaBrokers, cfg.KafkaJobsTopic)
 	defer kafkaPublisher.Writer.Close()
 	dslClient := service.NewDSLRunnerClient(service.DSLRunnerConfig{
@@ -76,7 +77,11 @@ func main() {
 	})
 	services := application.New(repos, store, authClient, dslClient, cfg.OutboxMaxAttempt)
 	handler := handlers.New(services)
-	router := httpserver.NewRouter(handler)
+	router := httpserver.NewRouter(handler, middleware.CORSConfig{
+		AllowedOrigins:   cfg.CORSAllowedOrigins,
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-User-Id", "X-Roles"},
+		AllowCredentials: cfg.CORSAllowCredentials,
+	})
 
 	outboxWorker := &application.OutboxWorker{
 		Repo:      store.Outbox,

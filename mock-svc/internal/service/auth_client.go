@@ -15,14 +15,16 @@ import (
 )
 
 type AuthClient struct {
-	baseURL    string
-	httpClient *http.Client
+	baseURL        string
+	internalSecret string
+	httpClient     *http.Client
 }
 
-func NewAuthClient(baseURL string) *AuthClient {
+func NewAuthClient(baseURL, internalSecret string) *AuthClient {
 	return &AuthClient{
-		baseURL:    strings.TrimRight(baseURL, "/"),
-		httpClient: &http.Client{Timeout: 5 * time.Second},
+		baseURL:        strings.TrimRight(baseURL, "/"),
+		internalSecret: internalSecret,
+		httpClient:     &http.Client{Timeout: 5 * time.Second},
 	}
 }
 
@@ -32,7 +34,7 @@ func (c *AuthClient) CheckAccess(ctx context.Context, token, resourceType, resou
 		"resourceId":   resourceID,
 		"action":       action,
 	}
-	resp, status, err := c.doJSON(ctx, http.MethodPost, "/authz/v1/check", token, payload)
+	resp, status, err := c.doJSON(ctx, http.MethodPost, "/authz/v1/check", token, payload, nil)
 	if err != nil {
 		return false, "", false, err
 	}
@@ -58,7 +60,7 @@ func (c *AuthClient) ListResources(ctx context.Context, token, resourceType, min
 		q.Set("minPermission", minPermission)
 	}
 	path := "/authz/v1/resources?" + q.Encode()
-	resp, status, err := c.doJSON(ctx, http.MethodGet, path, token, nil)
+	resp, status, err := c.doJSON(ctx, http.MethodGet, path, token, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +95,11 @@ func (c *AuthClient) RegisterResource(ctx context.Context, resourceType, resourc
 		"resourceId":   resourceID,
 		"ownerUserId":  ownerUserID,
 	}
-	resp, status, err := c.doJSON(ctx, http.MethodPost, "/authz/v1/resources", "", payload)
+	headers := map[string]string{}
+	if c.internalSecret != "" {
+		headers["X-Internal-Secret"] = c.internalSecret
+	}
+	resp, status, err := c.doJSON(ctx, http.MethodPost, "/authz/v1/resources", "", payload, headers)
 	if err != nil {
 		return err
 	}
@@ -105,7 +111,7 @@ func (c *AuthClient) RegisterResource(ctx context.Context, resourceType, resourc
 	return nil
 }
 
-func (c *AuthClient) doJSON(ctx context.Context, method, path, token string, payload any) (*http.Response, int, error) {
+func (c *AuthClient) doJSON(ctx context.Context, method, path, token string, payload any, headers map[string]string) (*http.Response, int, error) {
 	endpoint := c.baseURL + path
 	var body io.Reader
 	if payload != nil {
@@ -124,6 +130,9 @@ func (c *AuthClient) doJSON(ctx context.Context, method, path, token string, pay
 	}
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	for key, value := range headers {
+		req.Header.Set(key, value)
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
