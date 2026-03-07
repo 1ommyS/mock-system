@@ -26,57 +26,67 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 import { CodeEditor } from "@/shared/ui/code-editor";
 import { Input } from "@/shared/ui/input";
 
-const DSL_EXAMPLE = `{
-  "version": 1,
-  "steps": [
-    {
-      "op": "let",
-      "name": "basePath",
-      "value": { "$": "input.base.request_match.path" }
-    },
-    {
-      "op": "repeat",
-      "count": 2,
-      "do": [
-        {
-          "op": "emit",
-          "name": { "$fn": "concat", "args": ["gen-", { "$": "loop.index" }] },
-          "requestMatch": {
-            "method": { "$": "input.base.request_match.method" },
-            "path": { "$fn": "concat", "args": [{ "$": "vars.basePath" }, "/v", { "$": "loop.index" }] }
-          },
-          "responseTemplate": {
-            "status": 200,
-            "body": {
-              "stableId": { "$fn": "randUUID", "args": [] },
-              "n": { "$fn": "randInt", "args": [1, 10] }
-            }
-          },
-          "meta": { "from": "dsl" }
-        }
-      ]
+const DSL_EXAMPLE = `version 1
+
+let basePath = input.base.request_match.path
+
+repeat 2 {
+  emit "gen-" + loop.index {
+    requestMatch {
+      method: input.base.request_match.method
+      path: basePath + "/v" + loop.index
     }
-  ]
+    responseTemplate {
+      status: 200
+      body: {
+        stableId: randUUID()
+        n: randInt(1, 10)
+      }
+    }
+    meta {
+      from: "dsl"
+      i: loop.index
+    }
+  }
 }`;
 
 const dslScriptSchema = z
   .string()
   .min(1, "Введите DSL скрипт")
   .superRefine((value, ctx) => {
+    const source = value.trim();
+    if (!source) return;
+
+    if (!source.startsWith("{")) {
+      if (!/\bversion\s+1\b/.test(source)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Для текстового DSL укажите заголовок `version 1`",
+        });
+      }
+      if (!/\b(let|if|repeat|for|emit|assert)\b/.test(source)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Добавьте хотя бы одну DSL-операцию: let/if/repeat/for/emit/assert",
+        });
+      }
+      return;
+    }
+
     let parsed: unknown;
     try {
-      parsed = JSON.parse(value);
+      parsed = JSON.parse(source);
     } catch {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Нужно валидное JSON значение",
+        message: "JSON DSL: нужно валидное JSON значение",
       });
       return;
     }
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "DSL должен быть JSON-объектом",
+        message: "JSON DSL должен быть JSON-объектом",
       });
       return;
     }
@@ -84,13 +94,13 @@ const dslScriptSchema = z
     if (record.version !== 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Поддерживается только версия 1",
+        message: "JSON DSL: поддерживается только версия 1",
       });
     }
     if (!Array.isArray(record.steps) || record.steps.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Добавьте хотя бы один шаг в steps",
+        message: "JSON DSL: добавьте хотя бы один шаг в steps",
       });
     }
   });
@@ -127,7 +137,7 @@ const formSchema = z.object({
 
 type DslFormValues = z.infer<typeof formSchema>;
 
-const DSL_OPERATIONS = ["let", "if", "repeat", "forEach", "emit", "assert"];
+const DSL_OPERATIONS = ["let", "if", "repeat", "for", "emit", "assert"];
 const DSL_FUNCTIONS = [
   "get",
   "concat",
@@ -469,13 +479,13 @@ export default function DslRunnerPage() {
                 control={control}
                 render={({ field }) => (
                   <CodeEditor
-                    label="JSON DSL"
+                    label="DSL Script"
                     value={field.value}
                     onChange={field.onChange}
                     error={errors.dslScript?.message}
-                    hint="DSL хранится как JSON. Используйте ops и выражения с $ и $fn."
+                    hint="Поддерживается текстовый DSL (version 1) и legacy JSON DSL."
                     height="360px"
-                    autoQuoteKeys
+                    autoQuoteKeys={false}
                   />
                 )}
               />
@@ -561,7 +571,7 @@ export default function DslRunnerPage() {
                 </div>
               </div>
               <p className="text-xs text-[var(--text-muted)]">
-                Путь к данным: <span className="text-[var(--text-primary)]">{"{\"$\": \"input.base.request_match.path\"}"}</span>
+                Путь к данным: <span className="text-[var(--text-primary)]">input.base.request_match.path</span>
               </p>
             </CardContent>
           </Card>

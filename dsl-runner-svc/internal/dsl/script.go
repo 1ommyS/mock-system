@@ -68,6 +68,25 @@ type AssertStep struct {
 func (s AssertStep) Op() string { return s.OpName }
 
 func ParseScript(data []byte) (Script, error) {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 {
+		return Script{}, fmt.Errorf("empty script")
+	}
+	if trimmed[0] != '{' {
+		script, err := parseTextScript(trimmed)
+		if err != nil {
+			return Script{}, fmt.Errorf("parse script: %w", err)
+		}
+		return script, nil
+	}
+	script, err := parseJSONScript(trimmed)
+	if err != nil {
+		return Script{}, fmt.Errorf("parse script: %w", err)
+	}
+	return script, nil
+}
+
+func parseJSONScript(data []byte) (Script, error) {
 	var raw struct {
 		Version int               `json:"version"`
 		Steps   []json.RawMessage `json:"steps"`
