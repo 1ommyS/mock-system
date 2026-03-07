@@ -101,7 +101,8 @@ USER_SVC_INTERNAL_SECRET=dev-secret
 ## 🧠 DSL
 
 Документация по текстовому DSL:
-- `dsl-runner-svc/docs/dsl-language.md`
+- [Спецификация DSL](dsl-runner-svc/docs/dsl-language.md)
+- [Описание и список примеров DSL](dsl-runner-svc/examples/dsl/README.md)
 
 Примеры:
 - `dsl-runner-svc/examples/dsl/basic-repeat.dsl`
@@ -131,4 +132,3 @@ bun run test
 - Конфиги сервисов лежат в `user-svc/config.yaml`, `mock-svc/config.yaml`, `dsl-runner-svc/config.yaml`.
 - Везде уже проставлены локальные дефолты для `dev-secret` и локальных портов.
 - JSON DSL по-прежнему поддерживается, но основной рабочий вариант теперь — текстовый DSL.
-
