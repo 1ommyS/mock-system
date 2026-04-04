@@ -117,3 +117,47 @@ for item, idx in ["a", "b"] {
 		t.Fatalf("unexpected names: %q, %q", res.Generated[0].Name, res.Generated[1].Name)
 	}
 }
+
+func TestExecutorRunTextDSLGetWithPathAndDefault(t *testing.T) {
+	src := `
+version 1
+
+let includeDebug = get(input.params.includeDebug, false)
+
+if includeDebug {
+  emit "debug" {
+    requestMatch { method: "GET", path: "/debug" }
+    responseTemplate { status: 200, body: { mode: "debug" } }
+    meta { branch: "debug" }
+  }
+} else {
+  emit "prod" {
+    requestMatch { method: "GET", path: "/prod" }
+    responseTemplate { status: 200, body: { mode: "prod" } }
+    meta { branch: "prod" }
+  }
+}
+`
+
+	exec := NewExecutor()
+	res, err := exec.Run(ExecInput{
+		Seed:       "seed-text-get-1",
+		ScriptText: src,
+		BaseMock:   json.RawMessage(`{}`),
+		Params:     json.RawMessage(`{"includeDebug": true}`),
+		Limits: domain.JobLimits{
+			TimeoutMs:         5000,
+			MaxGeneratedMocks: 10,
+			MaxResultBytes:    2_000_000,
+		},
+	})
+	if err != nil {
+		t.Fatalf("run text get script: %v", err)
+	}
+	if len(res.Generated) != 1 {
+		t.Fatalf("expected 1 generated mock, got %d", len(res.Generated))
+	}
+	if res.Generated[0].Name != "debug" {
+		t.Fatalf("unexpected name: %q", res.Generated[0].Name)
+	}
+}

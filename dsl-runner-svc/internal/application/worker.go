@@ -72,9 +72,11 @@ func (h *JobHandler) Process(ctx context.Context, msg domain.JobMessage) error {
 
 	if !inserted {
 		switch job.Status {
-		case domain.JobStatusDone, domain.JobStatusFailed:
+		case domain.JobStatusDone:
 			slog.Info("job already completed", "job_id", job.JobID, "status", job.Status)
 			return h.publishResult(ctx, job)
+		case domain.JobStatusFailed:
+			slog.Info("job retry requested for failed job", "job_id", job.JobID, "attempt", job.Attempt)
 		case domain.JobStatusRunning:
 			slog.Info("job already running", "job_id", job.JobID)
 			return NewTransient(fmt.Errorf("job %s already running", job.JobID))

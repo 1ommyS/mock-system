@@ -210,7 +210,7 @@ export default function RegisterPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button
-            className="w-full text-base text-black dark:text-white"
+            className="w-full text-base !text-[var(--text-primary)]"
             disabled={isSubmitting}
             type="submit"
           >

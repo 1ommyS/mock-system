@@ -234,7 +234,13 @@ func evalValue(ctx *EvalContext, funcs FuncRegistry, val any) (any, error) {
 				return nil, fmt.Errorf("$fn args must be array")
 			}
 			args := make([]any, 0, len(argsArray))
-			for _, item := range argsArray {
+			for i, item := range argsArray {
+				if fnName == "get" && i == 0 {
+					// get(path, default?) must receive raw path expression as first arg,
+					// so default fallback works for missing paths.
+					args = append(args, item)
+					continue
+				}
 				resolved, err := evalValue(ctx, funcs, item)
 				if err != nil {
 					return nil, err

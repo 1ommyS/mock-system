@@ -61,6 +61,14 @@ type jobResult struct {
 	Warnings   []string        `json:"warnings"`
 }
 
+type jobStatus struct {
+	Status string `json:"status"`
+	Error  *struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+}
+
 type generatedSpec struct {
 	Name             string          `json:"name"`
 	RequestMatch     json.RawMessage `json:"requestMatch"`
@@ -263,6 +271,19 @@ func (c *DSLRunnerClient) waitForResult(ctx context.Context, jobID string) ([]ap
 			}
 			return mapGenerated(result.Generated), nil
 		case http.StatusConflict, http.StatusNotFound:
+			status, err := c.getJobStatus(ctx, jobID)
+			if err != nil {
+				return nil, err
+			}
+			if status != nil && status.Status == "FAILED" {
+				if status.Error != nil && status.Error.Message != "" {
+					return nil, fmt.Errorf("dsl runner job failed (%s): %s", status.Error.Code, status.Error.Message)
+				}
+				if status.Error != nil && status.Error.Code != "" {
+					return nil, fmt.Errorf("dsl runner job failed (%s)", status.Error.Code)
+				}
+				return nil, fmt.Errorf("dsl runner job failed")
+			}
 			select {
 			case <-time.After(c.pollInterval):
 				continue
@@ -273,6 +294,34 @@ func (c *DSLRunnerClient) waitForResult(ctx context.Context, jobID string) ([]ap
 			return nil, fmt.Errorf("dsl runner error: %s", string(data))
 		}
 	}
+}
+
+func (c *DSLRunnerClient) getJobStatus(ctx context.Context, jobID string) (*jobStatus, error) {
+	endpoint := c.baseURL + "/dslrunner/v1/jobs/" + jobID
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set(c.headerName, c.internalSecret)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	data, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusConflict {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("dsl runner status error: %s", string(data))
+	}
+
+	var status jobStatus
+	if err := json.Unmarshal(data, &status); err != nil {
+		return nil, err
+	}
+	return &status, nil
 }
 
 func mapGenerated(items []generatedSpec) []application.GeneratedMock {
